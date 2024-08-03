@@ -23,85 +23,112 @@ const (
   NO_VALUE = "NO_VALUE"
 )
 
+type Location struct {
+  line int
+  col int
+}
+
+func (l Location) Repr() string {
+  return fmt.Sprintf("Location{line: %d, col: %d}", l.line, l.col)
+}
+
 type Token struct {
   tokenType string
   value string
+  start Location
 }
 
 func (t Token) Repr() string {
   if t.value == NO_VALUE {
-    return fmt.Sprintf("Token{type: %s}", t.tokenType)
+    return fmt.Sprintf(`Token{
+  type: %s,
+  location: %s
+}`, t.tokenType, t.start.Repr())
   }
-  return fmt.Sprintf("Token{type: %s, value: \"%s\"}", t.tokenType, t.value)
+  return fmt.Sprintf(`Token{
+  type: %s,
+  value: %s,
+  location: %s
+}`, t.tokenType, t.value, t.start.Repr())
 }
 
-func KeyToken(value string) Token {
+func KeyToken(value string, start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_KEY,
     value: value,
+    start: start,
   }
 }
 
-func AssignToken() Token {
+func AssignToken(start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_ASSIGN,
     value: NO_VALUE,
+    start: start,
   }
 }
 
-func NumberToken(value string) Token {
+func NumberToken(value string, start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_NUMBER,
     value: value,
+    start: start,
   }
 }
 
-func StringToken(value string) Token {
+func StringToken(value string, start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_STRING,
     value: value,
+    start: start,
   }
 }
 
-func BoolToken(value string) Token {
+func BoolToken(value string, start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_BOOL,
     value: value,
+    start: start,
   }
 }
 
-func OpenListToken() Token {
+func OpenListToken(start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_OPEN_LIST,
     value: NO_VALUE,
+    start: start,
   }
 }
 
-func CloseListToken() Token {
+func CloseListToken(start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_CLOSE_LIST,
     value: NO_VALUE,
+    start: start,
   }
 }
 
-func CommaToken() Token {
+func CommaToken(start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_COMMA,
     value: NO_VALUE,
+    start: start,
   }
 }
 
-func OpenObjToken() Token {
+func OpenObjToken(start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_OPEN_OBJ,
     value: NO_VALUE,
+    start: start,
   }
 }
 
-func CloseObjToken() Token {
+func CloseObjToken(start Location) Token {
   return Token{
     tokenType: TOKEN_TYPE_CLOSE_OBJ,
     value: NO_VALUE,
+    start: start,
   }
 }
 
@@ -149,10 +176,11 @@ func (t *Tokeniser) GoBack() {
 func (t *Tokeniser) ParseString() string {
   s := ""
 
+  loc := t.GetCurrLineAndCol()
   initial := t.Consume()
 
   if initial != '"' && initial != '\'' {
-    fmt.Println(t.FormatErrorAt("Expected `\"` or `'` to start string", t.currIndex - 1))
+    fmt.Println(t.FormatErrorAt("Expected `\"` or `'` to start string", loc))
     os.Exit(1)
   }
 
@@ -160,6 +188,7 @@ func (t *Tokeniser) ParseString() string {
     c := t.Consume()
 
     if c == '\\' {
+      nextloc := t.GetCurrLineAndCol()
       next := t.Consume()
 
       switch next {
@@ -178,7 +207,7 @@ func (t *Tokeniser) ParseString() string {
         case 'f':
           s += "\f"
         default:
-          fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), t.currIndex - 1))
+          fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc))
           os.Exit(1)
       }
     } else if c == initial {
@@ -191,7 +220,7 @@ func (t *Tokeniser) ParseString() string {
   return s
 }
 
-func (t *Tokeniser) GetLineAndCol(index int) (int, int) {
+func (t *Tokeniser) GetLineAndCol(index int) Location {
   line := 1
   col := 1
 
@@ -204,23 +233,21 @@ func (t *Tokeniser) GetLineAndCol(index int) (int, int) {
     }
   }
 
-  return line, col
+  return Location{line, col}
 }
 
-func (t *Tokeniser) GetCurrLineAndCol() (int, int) {
+func (t *Tokeniser) GetCurrLineAndCol() Location {
   return t.GetLineAndCol(t.currIndex)
 }
 
-func (t *Tokeniser) FormatErrorAt(message string, index int) string {
-  line, col := t.GetLineAndCol(index)
-
-  return fmt.Sprintf("Tokeniser error at line %d, col %d: %s", line, col, message)
+func (t *Tokeniser) FormatErrorAt(message string, loc Location) string {
+  return fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.line, loc.col, message)
 }
 
 func (t *Tokeniser) FormatError(message string) string {
-  line, col := t.GetCurrLineAndCol()
+  loc := t.GetCurrLineAndCol()
 
-  return fmt.Sprintf("Tokeniser error at line %d, col %d: %s", line, col, message)
+  return fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.line, loc.col, message)
 }
 
 func (t *Tokeniser) Tokenise() []Token {
@@ -231,6 +258,7 @@ func (t *Tokeniser) Tokenise() []Token {
   }
 
   for {
+    loc := t.GetCurrLineAndCol()
     c := t.Consume()
 
     if c == 0 {
@@ -252,12 +280,12 @@ func (t *Tokeniser) Tokenise() []Token {
       }
 
       if word == "true" || word == "false" {
-        tokens = append(tokens, BoolToken(word))
+        tokens = append(tokens, BoolToken(word, loc))
       } else {
-        tokens = append(tokens, KeyToken(word))
+        tokens = append(tokens, KeyToken(word, loc))
       }
     } else if c == '=' {
-      tokens = append(tokens, AssignToken())
+      tokens = append(tokens, AssignToken(loc))
     } else if unicode.IsDigit(c) {
       number := string(c)
 
@@ -272,29 +300,29 @@ func (t *Tokeniser) Tokenise() []Token {
         } else if unicode.IsSpace(next) {
           break
         } else if unicode.IsLetter(next) {
-          fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unexpected character in number: `%c`", next), t.currIndex - 1))
+          fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unexpected character in number: `%c`", next), t.GetCurrLineAndCol()))
           os.Exit(1)
         } else {
           break
         }
       }
 
-      tokens = append(tokens, NumberToken(number))
+      tokens = append(tokens, NumberToken(number, loc))
     } else if c == '"' || c == '\'' {
       t.GoBack()
       parsed := t.ParseString()
 
-      tokens = append(tokens, StringToken(parsed))
+      tokens = append(tokens, StringToken(parsed, loc))
     } else if c == '[' {
-      tokens = append(tokens, OpenListToken())
+      tokens = append(tokens, OpenListToken(loc))
     } else if c == ']' {
-      tokens = append(tokens, CloseListToken())
+      tokens = append(tokens, CloseListToken(loc))
     } else if c == ',' {
-      tokens = append(tokens, CommaToken())
+      tokens = append(tokens, CommaToken(loc))
     } else if c == '{' {
-      tokens = append(tokens, OpenObjToken())
+      tokens = append(tokens, OpenObjToken(loc))
     } else if c == '}' {
-      tokens = append(tokens, CloseObjToken())
+      tokens = append(tokens, CloseObjToken(loc))
     } else if c == '#' {
       for {
         next := t.Consume()
@@ -306,7 +334,7 @@ func (t *Tokeniser) Tokenise() []Token {
     } else if unicode.IsSpace(c) {
       continue
     } else {
-      fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unexpected character: `%c`", c), t.currIndex - 1))
+      fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unexpected character: `%c`", c), loc))
       os.Exit(1)
     }
   }
