@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"os"
 
+	"github.com/marzeq/mconf/internal/parser"
 	"github.com/marzeq/mconf/internal/tokeniser"
 )
 
@@ -24,7 +25,7 @@ func main() {
 
   tokens := t.Tokenise()
 
-  for _, token := range tokens {
-    fmt.Println(token.Repr())
-  }
+  p := parser.NewParser(tokens)
+
+  p.Parse()
 }
