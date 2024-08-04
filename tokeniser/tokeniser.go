@@ -18,6 +18,8 @@ const (
 	TOKEN_TYPE_COMMA      = "COMMA"
 	TOKEN_TYPE_OPEN_OBJ   = "OPEN_OBJ"
 	TOKEN_TYPE_CLOSE_OBJ  = "CLOSE_OBJ"
+
+  TOKEN_TYPE_EOF = "EOF"
 )
 
 const (
@@ -139,6 +141,14 @@ func CloseObjToken(start Location) Token {
 		Value:     NO_VALUE,
 		Start:     start,
 	}
+}
+
+func EOFToken() Token {
+  return Token{
+    Type: TOKEN_TYPE_EOF,
+    Value:     NO_VALUE,
+    Start:     Location{0, 0},
+  }
 }
 
 type Tokeniser struct {
