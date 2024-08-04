@@ -4,8 +4,8 @@ import (
 	// "fmt"
 	"os"
 
-	"github.com/marzeq/mconf/internal/parser"
-	"github.com/marzeq/mconf/internal/tokeniser"
+	"github.com/marzeq/mconf/parser"
+	"github.com/marzeq/mconf/tokeniser"
 )
 
 func check(e error) {

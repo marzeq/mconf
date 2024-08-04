@@ -2,7 +2,7 @@ package parser
 
 import (
   "fmt"
-  "github.com/marzeq/mconf/internal/tokeniser"
+  "github.com/marzeq/mconf/tokeniser"
 )
 
 type Parser struct {

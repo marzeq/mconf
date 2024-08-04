@@ -3,7 +3,7 @@ package tokeniser_test
 import (
 	"testing"
 
-	"github.com/marzeq/mconf/internal/tokeniser"
+	"github.com/marzeq/mconf/tokeniser"
 )
 
 func checkTokenEqual(t *testing.T, token tokeniser.Token, expectedToken tokeniser.Token) {
