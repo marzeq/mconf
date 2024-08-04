@@ -37,6 +37,12 @@ func ParseFromFile(filename string) (map[string]parser.ParserValue, error) {
   return ParseFromString(s)
 }
 
-func main() {
+func ParseFromBytes(b []byte) (map[string]parser.ParserValue, error) {
+  s := string(b)
 
+  return ParseFromString(s)
+}
+
+func main() {
+  
 }
