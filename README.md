@@ -79,19 +79,8 @@ nested_object_and_list = {
 ### constants
 
 ```conf
-# constants are a bit stupid (my bad!) and they're basically just like #define in C
 $some_constant = 123 
 abc = $some_constant
-
-# as a side effect of this design, constants can be used for key names
-# i personally wouldn't do this, as this is a bit confusing, but it's possible
-# because of my dislike for this, i might remove this feature in the future, but i don't know yet though
-$key_constant = some_key
-
-$key_constant = "value"
-some_object = {
-  $key_constant = "value"
-}
 ```
 
 ## license

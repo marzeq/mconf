@@ -29,12 +29,14 @@ type ParserValue interface {
 type Parser struct {
   tokens []tokeniser.Token
   currIndex int
+  constants map[string]ParserValue
 }
 
 func NewParser(tokens []tokeniser.Token) Parser {
   return Parser{
     tokens: tokens,
     currIndex: 0,
+    constants: make(map[string]ParserValue),
   }
 }
 
@@ -70,6 +72,55 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) stri
   return fmt.Sprintf("Parser error at line %d, col %d: %s\n", loc.Line, loc.Col, message)
 }
 
+func (p *Parser) ParseValue() ParserValue {
+  token := p.Consume()
+
+  switch token.Type {
+    case tokeniser.TOKEN_TYPE_STRING:
+      return &ParserValueString{Value: token.Value}
+    case tokeniser.TOKEN_TYPE_NUMBER:
+      converted, err := strconv.ParseFloat(token.Value, 64)
+
+      if err != nil {
+        fmt.Printf(p.FormatErrorAtToken("Failed to convert `%s` to number", token.Start))
+        os.Exit(1)
+      }
+
+      return &ParserValueNumber{Value: converted}
+    case tokeniser.TOKEN_TYPE_BOOL:
+      var converted bool
+
+      if token.Value == "true" {
+        converted = true
+      } else if token.Value == "false" {
+        converted = false
+      } else {
+        fmt.Printf(p.FormatErrorAtToken("Failed to convert `%s` to bool", token.Start))
+        os.Exit(1)
+      }
+
+      return &ParserValueBool{Value: converted}
+    case tokeniser.TOKEN_TYPE_CONSTANT:
+      value, ok := p.constants[token.Value]
+      
+      if !ok {
+        fmt.Printf(p.FormatErrorAtToken("Constant `%s` not found", token.Start))
+        os.Exit(1)
+      }
+      
+      return value
+    case tokeniser.TOKEN_TYPE_OPEN_LIST:
+      fmt.Println("List values not implemented yet")
+    case tokeniser.TOKEN_TYPE_OPEN_OBJ:
+      fmt.Println("Object values not implemented yet")
+    default:
+      fmt.Printf(p.FormatErrorAtToken("Unexpected token", token.Start))
+      os.Exit(1)
+  }
+
+  return nil
+}
+
 func (p *Parser) Parse() map[string]ParserValue {
   globalObject := make(map[string]ParserValue)
 
@@ -90,41 +141,23 @@ func (p *Parser) Parse() map[string]ParserValue {
           os.Exit(1)
         }
 
-        value := p.Consume()
-
-        switch value.Type {
-          case tokeniser.TOKEN_TYPE_STRING:
-            globalObject[key] = &ParserValueString{Value: value.Value}
-          case tokeniser.TOKEN_TYPE_NUMBER:
-            converted, err := strconv.ParseFloat(value.Value, 64)
-
-            if err != nil {
-              fmt.Printf(p.FormatErrorAtToken("Failed to convert `%s` to number", value.Start))
-              os.Exit(1)
-            }
-            
-            globalObject[key] = &ParserValueNumber{Value: converted}
-          case tokeniser.TOKEN_TYPE_BOOL:
-            var converted bool
-
-            if value.Value == "true" {
-              converted = true
-            } else if value.Value == "false" {
-              converted = false
-            } else {
-              fmt.Printf(p.FormatErrorAtToken("Failed to convert `%s` to bool", value.Start))
-              os.Exit(1)
-            }
-
-            globalObject[key] = &ParserValueBool{Value: converted}
-          case tokeniser.TOKEN_TYPE_OPEN_LIST:
-            fmt.Println("List values not implemented yet")
-          case tokeniser.TOKEN_TYPE_OPEN_OBJ:
-            fmt.Println("Object values not implemented yet")
-          default:
-            fmt.Printf(p.FormatErrorAtToken("Unexpected token", value.Start))
-            os.Exit(1)
+        value := p.ParseValue()
+        
+        globalObject[key] = value
+      }
+      case tokeniser.TOKEN_TYPE_CONSTANT: {
+        key := token.Value
+        
+        assign := p.Consume()
+        
+        if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
+          fmt.Printf(p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start))
+          os.Exit(1)
         }
+
+        value := p.ParseValue()
+
+        p.constants[key] = value
       }
       case tokeniser.TOKEN_TYPE_OPEN_OBJ: {
         // this is a object with no key that's on the root. it's optional and you can have as many of them,
