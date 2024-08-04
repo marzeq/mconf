@@ -3,7 +3,6 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/marzeq/mconf/tokeniser"
@@ -22,11 +21,11 @@ type ParserValue interface {
 
   ValueToString() string
 
-  GetString() string
-  GetNumber() float64
-  GetBool() bool
-  GetList() []ParserValue
-  GetObject() map[string]ParserValue
+  GetString() (string, error)
+  GetNumber() (float64, error)
+  GetBool() (bool, error)
+  GetList() ([]ParserValue, error)
+  GetObject() (map[string]ParserValue, error)
 }
 
 type Parser struct {
@@ -114,9 +113,17 @@ func (p *Parser) ParseValue() (ParserValue, error) {
       
       return value, nil
     case tokeniser.TOKEN_TYPE_OPEN_LIST:
-      return &ParserValueList{Value: p.ParseList()}, nil
+      parsedList, err := p.ParseList()
+      
+      if err != nil { return nil, err }
+
+      return &ParserValueList{Value: parsedList}, nil
     case tokeniser.TOKEN_TYPE_OPEN_OBJ:
-      return &ParserValueObject{Value: p.ParseObject()}, nil
+      parsedObj, err := p.ParseObject()
+      
+      if err != nil { return nil, err }
+
+      return &ParserValueObject{Value: parsedObj}, nil
     default:
       return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
   }
