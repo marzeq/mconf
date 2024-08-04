@@ -76,6 +76,31 @@ nested_object_and_list = {
 }
 ```
 
+#### top level objects
+
+this is a a neat way to organise your file, where if you put an object at the top level, it's keys will be merged with the top level keys
+
+you can think of this as a way to split the file into sections of multiple related keys
+
+```conf
+{
+  foo = 123
+  bar = 123
+}
+
+{
+  baz = 123
+}
+```
+
+is equivalent to
+
+```conf
+foo = 123
+bar = 123
+baz = 123
+```
+
 ### constants
 
 ```conf
