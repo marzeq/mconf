@@ -12,3 +12,7 @@ obj = {
   prop1 = 1
   prop2 = 2
 }
+
+$val = 3
+a = $val
+b = $val
