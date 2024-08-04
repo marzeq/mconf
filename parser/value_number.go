@@ -1,11 +1,17 @@
 package parser
 
+import "strconv"
+
 type ParserValueNumber struct {
   Value float64
 }
 
 func (v *ParserValueNumber) GetType() string {
   return PARSER_VALUE_TYPE_NUMBER
+}
+
+func (v *ParserValueNumber) ValueToString() string {
+  return strconv.FormatFloat(v.Value, 'f', -1, 64)
 }
 
 func (v *ParserValueNumber) GetNumber() float64 {

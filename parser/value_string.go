@@ -1,5 +1,9 @@
 package parser
 
+import (
+	"strings"
+)
+
 type ParserValueString struct {
   Value string
 }
@@ -10,6 +14,18 @@ func (v *ParserValueString) GetType() string {
 
 func (v *ParserValueString) GetString() string {
   return v.Value
+}
+
+func (v *ParserValueString) ValueToString() string {
+  // replace " with \"
+
+  replaced := strings.ReplaceAll(v.Value, "\"", "\\\"")
+  replaced = strings.ReplaceAll(replaced, "\n", "\\n")
+  replaced = strings.ReplaceAll(replaced, "\r", "\\r")
+  replaced = strings.ReplaceAll(replaced, "\t", "\\t")
+  replaced = strings.ReplaceAll(replaced, "\f", "\\f")
+
+  return "\"" + replaced + "\""
 }
 
 func (v *ParserValueString) GetNumber() float64 {

@@ -19,6 +19,8 @@ const (
 type ParserValue interface {
   GetType() string
 
+  ValueToString() string
+
   GetString() string
   GetNumber() float64
   GetBool() bool
@@ -69,6 +71,10 @@ func (p *Parser) GoBack() {
 }
 
 func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) string {
+  if loc.Line == 0 && loc.Col == 0 {
+    return fmt.Sprintf("Parser error at EOF: %s\n", message)
+  }
+
   return fmt.Sprintf("Parser error at line %d, col %d: %s\n", loc.Line, loc.Col, message)
 }
 
@@ -82,7 +88,7 @@ func (p *Parser) ParseValue() ParserValue {
       converted, err := strconv.ParseFloat(token.Value, 64)
 
       if err != nil {
-        fmt.Printf(p.FormatErrorAtToken("Failed to convert `%s` to number", token.Start))
+        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to number", token.Value), token.Start))
         os.Exit(1)
       }
 
@@ -95,7 +101,7 @@ func (p *Parser) ParseValue() ParserValue {
       } else if token.Value == "false" {
         converted = false
       } else {
-        fmt.Printf(p.FormatErrorAtToken("Failed to convert `%s` to bool", token.Start))
+        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to bool", token.Value), token.Start))
         os.Exit(1)
       }
 
@@ -104,21 +110,99 @@ func (p *Parser) ParseValue() ParserValue {
       value, ok := p.constants[token.Value]
       
       if !ok {
-        fmt.Printf(p.FormatErrorAtToken("Constant `%s` not found", token.Start))
+        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start))
         os.Exit(1)
       }
       
       return value
     case tokeniser.TOKEN_TYPE_OPEN_LIST:
-      fmt.Println("List values not implemented yet")
+      return &ParserValueList{Value: p.ParseList()}
     case tokeniser.TOKEN_TYPE_OPEN_OBJ:
-      fmt.Println("Object values not implemented yet")
+      return &ParserValueObject{Value: p.ParseObject()}
     default:
-      fmt.Printf(p.FormatErrorAtToken("Unexpected token", token.Start))
+      fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start))
       os.Exit(1)
   }
 
   return nil
+}
+
+func (p *Parser) ParseList() []ParserValue {
+  list := make([]ParserValue, 0)
+
+  for {
+    token := p.Peek()
+
+    switch token.Type {
+      case tokeniser.TOKEN_TYPE_CLOSE_LIST:
+        p.Increment()
+        return list
+      case tokeniser.TOKEN_TYPE_STRING: fallthrough
+      case tokeniser.TOKEN_TYPE_NUMBER: fallthrough
+      case tokeniser.TOKEN_TYPE_BOOL: fallthrough
+      case tokeniser.TOKEN_TYPE_OPEN_LIST: fallthrough
+      case tokeniser.TOKEN_TYPE_CONSTANT: {
+        value := p.ParseValue()
+
+        comma_or_close := p.Peek()
+
+        if comma_or_close.Type == tokeniser.TOKEN_TYPE_COMMA {
+          p.Increment()
+        } else if comma_or_close.Type != tokeniser.TOKEN_TYPE_CLOSE_LIST {
+          fmt.Printf(p.FormatErrorAtToken("Expected comma or closing bracket", comma_or_close.Start))
+          os.Exit(1)
+        }
+
+        list = append(list, value)
+      }
+      default: {
+        fmt.Printf(p.FormatErrorAtToken("Unexpected token", token.Start))
+        os.Exit(1)
+      }
+    }
+  }
+
+  return list
+}
+
+func (p *Parser) ParseObject() map[string]ParserValue {
+  object := make(map[string]ParserValue)
+
+  for {
+    token := p.Consume()
+
+    switch token.Type {
+      case tokeniser.TOKEN_TYPE_CLOSE_OBJ:
+        return object
+      case tokeniser.TOKEN_TYPE_KEY: fallthrough
+      case tokeniser.TOKEN_TYPE_STRING: {
+        key := token.Value
+
+        assign := p.Consume()
+        
+        if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
+          fmt.Printf(p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start))
+          os.Exit(1)
+        }
+
+        value := p.ParseValue()
+        
+        object[key] = value
+        
+        optional_comma := p.Peek()
+
+        if optional_comma.Type == tokeniser.TOKEN_TYPE_COMMA {
+          p.Increment()
+        }
+      }
+      default: {
+        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start))
+        os.Exit(1)
+      }
+    }
+  }
+
+  return object
 }
 
 func (p *Parser) Parse() map[string]ParserValue {
@@ -186,8 +270,11 @@ func (p *Parser) Parse() map[string]ParserValue {
            key3 = "value3"
            ---
         */
+        object := p.ParseObject()
 
-        fmt.Println("Object values not implemented yet")
+        for k, v := range object {
+          globalObject[k] = v
+        }
       }
     }
   }

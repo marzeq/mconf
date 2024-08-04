@@ -1,11 +1,17 @@
 package parser
 
+import "strconv"
+
 type ParserValueBool struct {
   Value bool
 }
 
 func (v *ParserValueBool) GetType() string {
   return PARSER_VALUE_TYPE_BOOL
+}
+
+func (v *ParserValueBool) ValueToString() string {
+  return strconv.FormatBool(v.Value)
 }
 
 func (v *ParserValueBool) GetBool() bool {

@@ -8,6 +8,22 @@ func (v *ParserValueList) GetType() string {
   return PARSER_VALUE_TYPE_LIST
 }
 
+func (v *ParserValueList) ValueToString() string {
+  s := "["
+
+  for i, val := range v.Value {
+    s += val.ValueToString()
+
+    if i < len(v.Value) - 1 {
+      s += ", "
+    }
+  }
+
+  s += "]"
+
+  return s
+}
+
 func (v *ParserValueList) GetList() []ParserValue {
   return v.Value
 }

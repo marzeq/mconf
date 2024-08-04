@@ -30,16 +30,6 @@ func main() {
   parsed := p.Parse()
 
   for k, v := range parsed {
-    if v.GetType() == parser.PARSER_VALUE_TYPE_STRING {
-      fmt.Printf("%s: %s\n", k, v.GetString())
-    } else if v.GetType() == parser.PARSER_VALUE_TYPE_NUMBER {
-      fmt.Printf("%s: %f\n", k, v.GetNumber())
-    } else if v.GetType() == parser.PARSER_VALUE_TYPE_BOOL {
-      fmt.Printf("%s: %t\n", k, v.GetBool())
-    } else if v.GetType() == parser.PARSER_VALUE_TYPE_LIST {
-      fmt.Printf("%s: %v\n", k, v.GetList())
-    } else if v.GetType() == parser.PARSER_VALUE_TYPE_OBJECT {
-      fmt.Printf("%s: %v\n", k, v.GetObject())
-    }
+    fmt.Printf("%s = %s\n", k, v.ValueToString())
   }
 }
