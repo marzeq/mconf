@@ -24,27 +24,23 @@ func (v *ParserValueList) ValueToString() string {
   return s
 }
 
-func (v *ParserValueList) GetList() []ParserValue {
-  return v.Value
+func (v *ParserValueList) GetList() ([]ParserValue, error) {
+  return v.Value, nil
 }
 
-func (v *ParserValueList) GetString() string {
-  WrongTypeError(PARSER_VALUE_TYPE_STRING, PARSER_VALUE_TYPE_LIST)
-  return ""
+func (v *ParserValueList) GetString() (string, error) {
+  return "", WrongTypeError(PARSER_VALUE_TYPE_STRING, PARSER_VALUE_TYPE_LIST)
 }
 
-func (v *ParserValueList) GetNumber() float64 {
-  WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_LIST)
-  return 0
+func (v *ParserValueList) GetNumber() (float64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_LIST)
 }
 
-func (v *ParserValueList) GetBool() bool {
-  WrongTypeError(PARSER_VALUE_TYPE_BOOL, PARSER_VALUE_TYPE_LIST)
-  return false
+func (v *ParserValueList) GetBool() (bool, error) {
+  return false, WrongTypeError(PARSER_VALUE_TYPE_BOOL, PARSER_VALUE_TYPE_LIST)
 }
 
-func (v *ParserValueList) GetObject() map[string]ParserValue {
-  WrongTypeError(PARSER_VALUE_TYPE_OBJECT, PARSER_VALUE_TYPE_LIST)
-  return nil
+func (v *ParserValueList) GetObject() (map[string]ParserValue, error) {
+  return nil, WrongTypeError(PARSER_VALUE_TYPE_OBJECT, PARSER_VALUE_TYPE_LIST)
 }
 

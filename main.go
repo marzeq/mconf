@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"os"
 
 	"github.com/marzeq/mconf/parser"
@@ -14,22 +14,29 @@ func check(e error) {
   }
 }
 
-func main() {
-  file, err := os.ReadFile("example.mconf")
-
-  check(err)
-
-  contents := string(file)
-
-  t := tokeniser.NewTokeniser(contents)
-
-  tokens := t.Tokenise()
+func ParseFromString(s string) (map[string]parser.ParserValue, error) {
+  t := tokeniser.NewTokeniser(s)
+  tokens, err := t.Tokenise()
+  
+  if err != nil { return nil, err }
 
   p := parser.NewParser(tokens)
 
-  parsed := p.Parse()
+  return p.Parse()
+}
 
-  for k, v := range parsed {
-    fmt.Printf("%s = %s\n", k, v.ValueToString())
+func ParseFromFile(filename string) (map[string]parser.ParserValue, error) {
+  f, err := os.ReadFile(filename)
+  
+  if err != nil {
+    return nil, err
   }
+
+  s := string(f)
+
+  return ParseFromString(s)
+}
+
+func main() {
+
 }

@@ -191,15 +191,14 @@ func (t *Tokeniser) GoBack() {
 	t.currIndex--
 }
 
-func (t *Tokeniser) ReadString() string {
+func (t *Tokeniser) ReadString() (string, error) {
 	s := ""
 
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
 	if initial != '"' && initial != '\'' {
-		fmt.Println(t.FormatErrorAt("Expected `\"` or `'` to start string", loc))
-		os.Exit(1)
+		return "", t.FormatErrorAt("Expected `\"` or `'` to start string", loc)
 	}
 
 	for {
@@ -225,8 +224,7 @@ func (t *Tokeniser) ReadString() string {
 			case 'f':
 				s += "\f"
 			default:
-				fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc))
-				os.Exit(1)
+        return "", t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc)
 			}
 		} else if c == initial {
 			break
@@ -235,15 +233,15 @@ func (t *Tokeniser) ReadString() string {
 		}
 	}
 
-	return s
+	return s, nil
 }
 
-func (t *Tokeniser) ReadWord() string {
+func (t *Tokeniser) ReadWord() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
 	if !unicode.IsLetter(initial) {
-		fmt.Println(t.FormatErrorAt("Expected letter to start a word", loc))
+    return "", t.FormatErrorAt("Expected letter to start a word", loc)
 	}
 
 	word := string(initial)
@@ -259,15 +257,15 @@ func (t *Tokeniser) ReadWord() string {
 		}
 	}
 
-	return word
+	return word, nil
 }
 
-func (t *Tokeniser) ReadNumber() string {
+func (t *Tokeniser) ReadNumber() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
 	if !unicode.IsDigit(initial) {
-		fmt.Println(t.FormatErrorAt("Expected digit to start a number", loc))
+		return "", t.FormatErrorAt("Expected digit to start a number", loc)
 	}
 
 	number := string(initial)
@@ -281,23 +279,21 @@ func (t *Tokeniser) ReadNumber() string {
 		} else if next == '_' {
 			t.Increment()
 		} else if unicode.IsLetter(next) {
-			fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unexpected character in number: `%c`", next), t.GetCurrLineAndCol()))
-			os.Exit(1)
+			return "", t.FormatErrorAt(fmt.Sprintf("Unexpected character in number: `%c`", next), t.GetCurrLineAndCol())
 		} else {
 			break
 		}
 	}
 
-	return number
+	return number, nil
 }
 
-func (t *Tokeniser) IgnoreComment() {
+func (t *Tokeniser) IgnoreComment() error {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
 	if initial != '#' {
-		fmt.Println(t.FormatErrorAt("Expected `#` to start a comment, this is a bug, please report it", loc))
-		os.Exit(1)
+		return t.FormatErrorAt("Expected `#` to start a comment, this is a bug, please report it", loc)
 	}
 
 	for {
@@ -309,6 +305,8 @@ func (t *Tokeniser) IgnoreComment() {
 
 		t.Increment()
 	}
+
+  return nil
 }
 
 func (t *Tokeniser) GetLineAndCol(index int) Location {
@@ -331,21 +329,21 @@ func (t *Tokeniser) GetCurrLineAndCol() Location {
 	return t.GetLineAndCol(t.currIndex)
 }
 
-func (t *Tokeniser) FormatErrorAt(message string, loc Location) string {
-	return fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message)
+func (t *Tokeniser) FormatErrorAt(message string, loc Location) error {
+	return fmt.Errorf(fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message))
 }
 
-func (t *Tokeniser) FormatError(message string) string {
+func (t *Tokeniser) FormatError(message string) error {
 	loc := t.GetCurrLineAndCol()
 
-	return fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message)
+	return fmt.Errorf(fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message))
 }
 
-func (t *Tokeniser) Tokenise() []Token {
+func (t *Tokeniser) Tokenise() ([]Token, error) {
 	tokens := []Token{}
 
 	if len(t.contents) == 0 {
-		return tokens
+		return tokens, nil
 	}
 
 	for {
@@ -357,7 +355,9 @@ func (t *Tokeniser) Tokenise() []Token {
 		}
 
 		if unicode.IsLetter(c) {
-			word := t.ReadWord()
+			word, error := t.ReadWord()
+
+      if error != nil { return nil, error }
 
 			if word == "true" || word == "false" {
 				tokens = append(tokens, BoolToken(word, loc))
@@ -365,11 +365,15 @@ func (t *Tokeniser) Tokenise() []Token {
 				tokens = append(tokens, KeyToken(word, loc))
 			}
 		} else if unicode.IsDigit(c) {
-			number := t.ReadNumber()
+			number, error := t.ReadNumber()
+
+      if error != nil { return nil, error }
 
 			tokens = append(tokens, NumberToken(number, loc))
 		} else if c == '"' || c == '\'' {
-			parsed := t.ReadString()
+			parsed, error := t.ReadString()
+
+      if error != nil { return nil, error }
 
 			tokens = append(tokens, StringToken(parsed, loc))
 		} else if c == '#' {
@@ -380,7 +384,9 @@ func (t *Tokeniser) Tokenise() []Token {
 			if c == '=' {
 				tokens = append(tokens, AssignToken(loc))
 			} else if c == '$' {
-				word := t.ReadWord()
+				word, error := t.ReadWord()
+
+        if error != nil { return nil, error }
 
 				tokens = append(tokens, ConstantToken(word, loc))
 			} else if c == '[' {
@@ -402,5 +408,5 @@ func (t *Tokeniser) Tokenise() []Token {
 		}
 	}
 
-	return tokens
+	return tokens, nil
 }

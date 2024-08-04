@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -70,29 +71,28 @@ func (p *Parser) GoBack() {
   p.currIndex--
 }
 
-func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) string {
+func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) error {
   if loc.Line == 0 && loc.Col == 0 {
-    return fmt.Sprintf("Parser error at EOF: %s\n", message)
+    return fmt.Errorf(fmt.Sprintf("Parser error at EOF: %s\n", message))
   }
 
-  return fmt.Sprintf("Parser error at line %d, col %d: %s\n", loc.Line, loc.Col, message)
+  return fmt.Errorf(fmt.Sprintf("Parser error at line %d, col %d: %s\n", loc.Line, loc.Col, message))
 }
 
-func (p *Parser) ParseValue() ParserValue {
+func (p *Parser) ParseValue() (ParserValue, error) {
   token := p.Consume()
 
   switch token.Type {
     case tokeniser.TOKEN_TYPE_STRING:
-      return &ParserValueString{Value: token.Value}
+      return &ParserValueString{Value: token.Value}, nil
     case tokeniser.TOKEN_TYPE_NUMBER:
       converted, err := strconv.ParseFloat(token.Value, 64)
 
       if err != nil {
-        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to number", token.Value), token.Start))
-        os.Exit(1)
+        return nil, errors.Join(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to number", token.Value), token.Start), err)
       }
 
-      return &ParserValueNumber{Value: converted}
+      return &ParserValueNumber{Value: converted}, nil
     case tokeniser.TOKEN_TYPE_BOOL:
       var converted bool
 
@@ -101,33 +101,30 @@ func (p *Parser) ParseValue() ParserValue {
       } else if token.Value == "false" {
         converted = false
       } else {
-        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to bool", token.Value), token.Start))
-        os.Exit(1)
+        return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to bool", token.Value), token.Start)
       }
 
-      return &ParserValueBool{Value: converted}
+      return &ParserValueBool{Value: converted}, nil
     case tokeniser.TOKEN_TYPE_CONSTANT:
       value, ok := p.constants[token.Value]
       
       if !ok {
-        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start))
-        os.Exit(1)
+        return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
       }
       
-      return value
+      return value, nil
     case tokeniser.TOKEN_TYPE_OPEN_LIST:
-      return &ParserValueList{Value: p.ParseList()}
+      return &ParserValueList{Value: p.ParseList()}, nil
     case tokeniser.TOKEN_TYPE_OPEN_OBJ:
-      return &ParserValueObject{Value: p.ParseObject()}
+      return &ParserValueObject{Value: p.ParseObject()}, nil
     default:
-      fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start))
-      os.Exit(1)
+      return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
   }
 
-  return nil
+  return nil, fmt.Errorf("Unreachable code reached, please report this as a bug")
 }
 
-func (p *Parser) ParseList() []ParserValue {
+func (p *Parser) ParseList() ([]ParserValue, error) {
   list := make([]ParserValue, 0)
 
   for {
@@ -136,36 +133,36 @@ func (p *Parser) ParseList() []ParserValue {
     switch token.Type {
       case tokeniser.TOKEN_TYPE_CLOSE_LIST:
         p.Increment()
-        return list
+        return list, nil
       case tokeniser.TOKEN_TYPE_STRING: fallthrough
       case tokeniser.TOKEN_TYPE_NUMBER: fallthrough
       case tokeniser.TOKEN_TYPE_BOOL: fallthrough
       case tokeniser.TOKEN_TYPE_OPEN_LIST: fallthrough
       case tokeniser.TOKEN_TYPE_CONSTANT: {
-        value := p.ParseValue()
+        value, err := p.ParseValue()
+
+        if err != nil { return nil, err }
 
         comma_or_close := p.Peek()
 
         if comma_or_close.Type == tokeniser.TOKEN_TYPE_COMMA {
           p.Increment()
         } else if comma_or_close.Type != tokeniser.TOKEN_TYPE_CLOSE_LIST {
-          fmt.Printf(p.FormatErrorAtToken("Expected comma or closing bracket", comma_or_close.Start))
-          os.Exit(1)
+          return nil, p.FormatErrorAtToken("Expected comma or closing bracket", comma_or_close.Start)
         }
 
         list = append(list, value)
       }
       default: {
-        fmt.Printf(p.FormatErrorAtToken("Unexpected token", token.Start))
-        os.Exit(1)
+        return nil, p.FormatErrorAtToken("Unexpected token", token.Start)
       }
     }
   }
 
-  return list
+  return list, nil
 }
 
-func (p *Parser) ParseObject() map[string]ParserValue {
+func (p *Parser) ParseObject() (map[string]ParserValue, error) {
   object := make(map[string]ParserValue)
 
   for {
@@ -173,7 +170,7 @@ func (p *Parser) ParseObject() map[string]ParserValue {
 
     switch token.Type {
       case tokeniser.TOKEN_TYPE_CLOSE_OBJ:
-        return object
+        return object, nil
       case tokeniser.TOKEN_TYPE_KEY: fallthrough
       case tokeniser.TOKEN_TYPE_STRING: {
         key := token.Value
@@ -181,11 +178,12 @@ func (p *Parser) ParseObject() map[string]ParserValue {
         assign := p.Consume()
         
         if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
-          fmt.Printf(p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start))
-          os.Exit(1)
+          return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
         }
 
-        value := p.ParseValue()
+        value, err := p.ParseValue()
+
+        if err != nil { return nil, err }
         
         object[key] = value
         
@@ -196,16 +194,15 @@ func (p *Parser) ParseObject() map[string]ParserValue {
         }
       }
       default: {
-        fmt.Printf(p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start))
-        os.Exit(1)
+        return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
       }
     }
   }
 
-  return object
+  return object, nil
 }
 
-func (p *Parser) Parse() map[string]ParserValue {
+func (p *Parser) Parse() (map[string]ParserValue, error) {
   globalObject := make(map[string]ParserValue)
 
   for {
@@ -213,7 +210,7 @@ func (p *Parser) Parse() map[string]ParserValue {
 
     switch token.Type {
       case tokeniser.TOKEN_TYPE_EOF:
-        return globalObject
+        return globalObject, nil
       case tokeniser.TOKEN_TYPE_KEY: fallthrough
       case tokeniser.TOKEN_TYPE_STRING: {
         key := token.Value
@@ -221,11 +218,12 @@ func (p *Parser) Parse() map[string]ParserValue {
         assign := p.Consume()
         
         if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
-          fmt.Printf(p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start))
-          os.Exit(1)
+          return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
         }
 
-        value := p.ParseValue()
+        value, err := p.ParseValue()
+
+        if err != nil { return nil, err }
         
         globalObject[key] = value
       }
@@ -235,11 +233,12 @@ func (p *Parser) Parse() map[string]ParserValue {
         assign := p.Consume()
         
         if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
-          fmt.Printf(p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start))
-          os.Exit(1)
+          return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
         }
 
-        value := p.ParseValue()
+        value, err := p.ParseValue()
+        
+        if err != nil { return nil, err }
 
         p.constants[key] = value
       }
@@ -270,7 +269,9 @@ func (p *Parser) Parse() map[string]ParserValue {
            key3 = "value3"
            ---
         */
-        object := p.ParseObject()
+        object, err := p.ParseObject()
+        
+        if err != nil { return nil, err }
 
         for k, v := range object {
           globalObject[k] = v
@@ -279,5 +280,5 @@ func (p *Parser) Parse() map[string]ParserValue {
     }
   }
 
-  return globalObject
+  return globalObject, nil
 }

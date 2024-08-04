@@ -12,10 +12,6 @@ func (v *ParserValueString) GetType() string {
   return PARSER_VALUE_TYPE_STRING
 }
 
-func (v *ParserValueString) GetString() string {
-  return v.Value
-}
-
 func (v *ParserValueString) ValueToString() string {
   // replace " with \"
 
@@ -28,22 +24,22 @@ func (v *ParserValueString) ValueToString() string {
   return "\"" + replaced + "\""
 }
 
-func (v *ParserValueString) GetNumber() float64 {
-  WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_STRING)
-  return 0
+func (v *ParserValueString) GetString() (string, error) {
+  return v.Value, nil
 }
 
-func (v *ParserValueString) GetBool() bool {
-  WrongTypeError(PARSER_VALUE_TYPE_BOOL, PARSER_VALUE_TYPE_STRING)
-  return false
+func (v *ParserValueString) GetNumber() (float64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_STRING)
 }
 
-func (v *ParserValueString) GetList() []ParserValue {
-  WrongTypeError(PARSER_VALUE_TYPE_LIST, PARSER_VALUE_TYPE_STRING)
-  return nil
+func (v *ParserValueString) GetBool() (bool, error) {
+  return false, WrongTypeError(PARSER_VALUE_TYPE_BOOL, PARSER_VALUE_TYPE_STRING)
 }
 
-func (v *ParserValueString) GetObject() map[string]ParserValue {
-  WrongTypeError(PARSER_VALUE_TYPE_OBJECT, PARSER_VALUE_TYPE_STRING)
-  return nil
+func (v *ParserValueString) GetList() ([]ParserValue, error) {
+  return nil, WrongTypeError(PARSER_VALUE_TYPE_LIST, PARSER_VALUE_TYPE_STRING)
+}
+
+func (v *ParserValueString) GetObject() (map[string]ParserValue, error) {
+  return nil, WrongTypeError(PARSER_VALUE_TYPE_OBJECT, PARSER_VALUE_TYPE_STRING)
 }
