@@ -7,7 +7,7 @@ type ParserValueObject struct {
 }
 
 func (v *ParserValueObject) GetType() string {
-  return PARSER_VALUE_TYPE_LIST
+  return PARSER_VALUE_TYPE_OBJECT
 }
 
 func (v *ParserValueObject) ValueToString() string {

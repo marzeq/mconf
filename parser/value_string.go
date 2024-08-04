@@ -13,8 +13,6 @@ func (v *ParserValueString) GetType() string {
 }
 
 func (v *ParserValueString) ValueToString() string {
-  // replace " with \"
-
   replaced := strings.ReplaceAll(v.Value, "\"", "\\\"")
   replaced = strings.ReplaceAll(replaced, "\n", "\\n")
   replaced = strings.ReplaceAll(replaced, "\r", "\\r")
