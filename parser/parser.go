@@ -92,8 +92,6 @@ func (p *Parser) Parse() map[string]ParserValue {
 
         value := p.Consume()
 
-        fmt.Println(value.Repr())
-        
         switch value.Type {
           case tokeniser.TOKEN_TYPE_STRING:
             globalObject[key] = &ParserValueString{Value: value.Value}
