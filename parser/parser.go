@@ -250,32 +250,6 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
         p.constants[key] = value
       }
       case tokeniser.TOKEN_TYPE_OPEN_OBJ: {
-        // this is a object with no key that's on the root. it's optional and you can have as many of them,
-        // so you can use them to kinda group things together without having to use a key.
-        //
-        // effecively, the opening and closing tokens for this object will be ignored and
-        // every key inside will be stuck onto the root object.
-        
-        /*
-           see this example:
-
-           ---
-           {
-             key1 = "value1"
-             key2 = "value2"
-           }
-           
-           { key3 = "value3" }
-           ---
-
-           is equivalent to:
-
-           ---
-           key1 = "value1"
-           key2 = "value2"
-           key3 = "value3"
-           ---
-        */
         object, err := p.ParseObject()
         
         if err != nil { return nil, err }
@@ -283,6 +257,9 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
         for k, v := range object {
           globalObject[k] = v
         }
+      }
+      default: {
+        return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
       }
     }
   }

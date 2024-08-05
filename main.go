@@ -185,6 +185,16 @@ func main() {
 
     fmt.Println(cast.Value)
   } else {
-    fmt.Println(indexedValue.ValueToString())
+    if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_OBJECT {
+      objval := indexedValue.(*parser.ParserValueObject)
+
+      fmt.Println(objval.IndentedString("  ", 1))
+    } else if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_LIST {
+      listval := indexedValue.(*parser.ParserValueList)
+
+      fmt.Println(listval.IndentedString("  ", 1))
+    } else {
+      fmt.Println(indexedValue.ValueToString())
+    }
   }
 }
