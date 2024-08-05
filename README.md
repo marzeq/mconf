@@ -30,7 +30,6 @@ key = "value"
 
 ```conf
 foo = "bar"
-baz = 'abc'
 def = "123
 456"
 ghi = "\"escaped quotes\""
