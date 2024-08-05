@@ -59,6 +59,8 @@ list = [1, 2, 3, "abc", 'def', true, false]
 two_dimensional_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 ```
 
+commas in lists are required
+
 ### objects/dictionaries/maps/(whatever you want to call them)
 
 ```conf
@@ -73,6 +75,16 @@ nested_object_and_list = {
     bar = "baz"
   }
   list = [1, 2, 3]
+}
+```
+
+commas in objects are optional, but you can use them if you want (especially useful for vim as without them, the builtin indenter gets confused)
+
+```conf
+object = {
+  foo = "bar",
+  bar = 123,
+  baz = false
 }
 ```
 
