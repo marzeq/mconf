@@ -10,7 +10,7 @@ func (v *ParserValueNumber) GetType() string {
   return PARSER_VALUE_TYPE_NUMBER
 }
 
-func (v *ParserValueNumber) ValueToString() string {
+func (v *ParserValueNumber) ValueToString(indentAndDepth ...int) string {
   return strconv.FormatFloat(v.Value, 'f', -1, 64)
 }
 

@@ -13,12 +13,12 @@ func (v *ParserValueObject) GetType() string {
   return PARSER_VALUE_TYPE_OBJECT
 }
 
-func (v *ParserValueObject) ValueToString() string {
+func (v *ParserValueObject) OneLineStringValue() string {
   if len(v.Value) == 0 {
     return "{}"
   }
 
-  s := "{"
+  s := "{ "
 
   keycount := 0
 
@@ -32,34 +32,45 @@ func (v *ParserValueObject) ValueToString() string {
     keycount++
   }
 
-  s += "}"
+  s += " }"
 
   return s
 }
 
-func (v *ParserValueObject) IndentedString(indent string, depth int) string {
+func (v *ParserValueObject) ValueToString(indentAndDepth ...int) string {
+  var indentSize int
+  var depth int
+  if len(indentAndDepth) == 0 {
+    indentSize = 0
+    depth = 1
+  } else if len(indentAndDepth) == 1 {
+    indentSize = indentAndDepth[0]
+    depth = 1
+  } else {
+    indentSize = indentAndDepth[0]
+    depth = indentAndDepth[1]
+  }
+
   if len(v.Value) == 0 {
     return "{}"
+  }
+
+  noIndent := v.OneLineStringValue()
+
+  if len(noIndent) < 16 || indentSize == 0 {
+    return noIndent
   }
 
   s := "{\n"
 
   keycount := 0
 
+  indent := strings.Repeat(" ", indentSize)
   currindent := strings.Repeat(indent, depth)
 
   for k, val := range v.Value {
-    if val.GetType() == PARSER_VALUE_TYPE_OBJECT {
-      objval := val.(*ParserValueObject)
-
-      s += fmt.Sprintf("%s%s = %s\n", currindent, k, objval.IndentedString(indent, depth + 1))
-    } else if val.GetType() == PARSER_VALUE_TYPE_LIST {
-      listval := val.(*ParserValueList)
-
-      s += fmt.Sprintf("%s%s = %s\n", currindent, k, listval.IndentedString(indent, depth + 1))
-    } else {
-      s += fmt.Sprintf("%s%s = %s\n", currindent, k, val.ValueToString())
-    }
+    s += fmt.Sprintf("%s%s = %s\n", currindent, k, val.ValueToString(indentSize, depth + 1))
+   
 
     keycount++
   }

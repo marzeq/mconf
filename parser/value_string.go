@@ -12,7 +12,7 @@ func (v *ParserValueString) GetType() string {
   return PARSER_VALUE_TYPE_STRING
 }
 
-func (v *ParserValueString) ValueToString() string {
+func (v *ParserValueString) ValueToString(indentAndDepth ...int) string {
   replaced := strings.ReplaceAll(v.Value, "\"", "\\\"")
   replaced = strings.ReplaceAll(replaced, "\n", "\\n")
   replaced = strings.ReplaceAll(replaced, "\r", "\\r")

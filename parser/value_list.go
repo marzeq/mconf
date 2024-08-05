@@ -13,7 +13,7 @@ func (v *ParserValueList) GetType() string {
   return PARSER_VALUE_TYPE_LIST
 }
 
-func (v *ParserValueList) ValueToString() string {
+func (v *ParserValueList) OneLineStringValue() string {
   if len(v.Value) == 0 {
     return "[]"
   }
@@ -33,33 +33,37 @@ func (v *ParserValueList) ValueToString() string {
   return s
 }
 
-func (v *ParserValueList) IndentedString(indent string, depth int) string {
-  if len(v.Value) == 0 {
-    return "[]"
+func (v *ParserValueList) ValueToString(indentAndDepth ...int) string {
+  var indentSize int
+  var depth int
+  if len(indentAndDepth) == 0 {
+    indentSize = 0
+    depth = 1
+  } else if len(indentAndDepth) == 1 {
+    indentSize = indentAndDepth[0]
+    depth = 1
+  } else {
+    indentSize = indentAndDepth[0]
+    depth = indentAndDepth[1]
   }
 
-  nonIndented := v.ValueToString()
+  if len(v.Value) == 0 {
+    return "{}"
+  }
 
-  if len(nonIndented) < 16 {
-    return nonIndented
+  noIndent := v.OneLineStringValue()
+
+  if len(noIndent) < 16 || indentSize == 0 {
+    return noIndent
   }
 
   s := "[\n"
   
+  indent := strings.Repeat(" ", indentSize)
   currindent := strings.Repeat(indent, depth)
 
   for i, val := range v.Value {
-    if val.GetType() == PARSER_VALUE_TYPE_OBJECT {
-      objval := val.(*ParserValueObject)
-
-      s += fmt.Sprintf("%s%s", currindent, objval.IndentedString(indent, depth + 1))
-    } else if val.GetType() == PARSER_VALUE_TYPE_LIST {
-      listval := val.(*ParserValueList)
-
-      s += fmt.Sprintf("%s%s", currindent, listval.IndentedString(indent, depth + 1))
-    } else {
-      s += fmt.Sprintf("%s%s", currindent, val.ValueToString())
-    }
+    s += fmt.Sprintf("%s%s", currindent, val.ValueToString(indentSize, depth + 1))
 
     if i < len(v.Value) - 1 {
       s += ","

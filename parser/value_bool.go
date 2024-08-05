@@ -10,7 +10,7 @@ func (v *ParserValueBool) GetType() string {
   return PARSER_VALUE_TYPE_BOOL
 }
 
-func (v *ParserValueBool) ValueToString() string {
+func (v *ParserValueBool) ValueToString(indentAndDepth ...int) string {
   return strconv.FormatBool(v.Value)
 }
 

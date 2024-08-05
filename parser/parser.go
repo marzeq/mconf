@@ -19,7 +19,7 @@ const (
 type ParserValue interface {
   GetType() string
 
-  ValueToString() string
+  ValueToString(indentAndDepth ...int) string
 
   GetString() (string, error)
   GetNumber() (float64, error)
