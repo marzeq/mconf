@@ -1,3 +1,0 @@
-[submodule "vim-syntax"]
-	path = vim-syntax
-	url = https://github.com/marzeq/mconf-vim
