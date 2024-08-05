@@ -197,8 +197,8 @@ func (t *Tokeniser) ReadString() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
-	if initial != '"' && initial != '\'' {
-		return "", t.FormatErrorAt("Expected `\"` or `'` to start string", loc)
+	if initial != '"' {
+		return "", t.FormatErrorAt("Expected `\"` to start string", loc)
 	}
 
 	for {
@@ -374,7 +374,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
       if error != nil { return nil, error }
 
 			tokens = append(tokens, NumberToken(number, loc))
-		} else if c == '"' || c == '\'' {
+		} else if c == '"' {
 			parsed, error := t.ReadString()
 
       if error != nil { return nil, error }
