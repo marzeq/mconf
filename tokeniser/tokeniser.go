@@ -264,11 +264,15 @@ func (t *Tokeniser) ReadNumber() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
-	if !unicode.IsDigit(initial) {
+	if !unicode.IsDigit(initial) && initial != '-' && initial != '.' {
 		return "", t.FormatErrorAt("Expected digit to start a number", loc)
 	}
 
 	number := string(initial)
+
+  if initial == '.' {
+    number = "0."
+  }
 
 	for {
 		next := t.Peek()
@@ -364,7 +368,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))
 			}
-		} else if unicode.IsDigit(c) {
+		} else if unicode.IsDigit(c) || c == '-' || c == '.' {
 			number, error := t.ReadNumber()
 
       if error != nil { return nil, error }
