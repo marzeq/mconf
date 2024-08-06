@@ -91,7 +91,6 @@ func (p *Parser) ParseValue() (ParserValue, error) {
   case tokeniser.TOKEN_TYPE_STRING:
     return &ParserValueString{Value: token.Value}, nil
   case tokeniser.TOKEN_TYPE_NUMBER:
-    fmt.Println(token.Value)
     if strings.Contains(token.Value, ".") {
       converted, err := strconv.ParseFloat(token.Value, 0)
 
