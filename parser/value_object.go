@@ -85,17 +85,25 @@ func (v *ParserValueObject) GetObject() (map[string]ParserValue, error) {
 }
 
 func (v *ParserValueObject) GetString() (string, error) {
-  return "", WrongTypeError(PARSER_VALUE_TYPE_STRING, PARSER_VALUE_TYPE_LIST)
+  return "", WrongTypeError(PARSER_VALUE_TYPE_STRING, PARSER_VALUE_TYPE_OBJECT)
 }
 
-func (v *ParserValueObject) GetNumber() (float64, error) {
-  return 0, WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_LIST)
+func (v *ParserValueObject) GetFloat() (float64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_FLOAT, PARSER_VALUE_TYPE_OBJECT)
+}
+
+func (v *ParserValueObject) GetInt() (int64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_INT, PARSER_VALUE_TYPE_OBJECT)
+}
+
+func (v *ParserValueObject) GetUInt() (uint64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_UINT, PARSER_VALUE_TYPE_OBJECT)
 }
 
 func (v *ParserValueObject) GetBool() (bool, error) {
-  return false, WrongTypeError(PARSER_VALUE_TYPE_BOOL, PARSER_VALUE_TYPE_LIST)
+  return false, WrongTypeError(PARSER_VALUE_TYPE_BOOL, PARSER_VALUE_TYPE_OBJECT)
 }
 
 func (v *ParserValueObject) GetList() ([]ParserValue, error) {
-  return nil, WrongTypeError(PARSER_VALUE_TYPE_LIST, PARSER_VALUE_TYPE_LIST)
+  return nil, WrongTypeError(PARSER_VALUE_TYPE_LIST, PARSER_VALUE_TYPE_OBJECT)
 }

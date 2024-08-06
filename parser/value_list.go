@@ -85,8 +85,16 @@ func (v *ParserValueList) GetString() (string, error) {
   return "", WrongTypeError(PARSER_VALUE_TYPE_STRING, PARSER_VALUE_TYPE_LIST)
 }
 
-func (v *ParserValueList) GetNumber() (float64, error) {
-  return 0, WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_LIST)
+func (v *ParserValueList) GetFloat() (float64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_FLOAT, PARSER_VALUE_TYPE_LIST)
+}
+
+func (v *ParserValueList) GetInt() (int64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_INT, PARSER_VALUE_TYPE_LIST)
+}
+
+func (v *ParserValueList) GetUInt() (uint64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_UINT, PARSER_VALUE_TYPE_LIST)
 }
 
 func (v *ParserValueList) GetBool() (bool, error) {

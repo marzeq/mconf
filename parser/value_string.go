@@ -26,8 +26,16 @@ func (v *ParserValueString) GetString() (string, error) {
   return v.Value, nil
 }
 
-func (v *ParserValueString) GetNumber() (float64, error) {
-  return 0, WrongTypeError(PARSER_VALUE_TYPE_NUMBER, PARSER_VALUE_TYPE_STRING)
+func (v *ParserValueString) GetFloat() (float64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_FLOAT, PARSER_VALUE_TYPE_STRING)
+}
+
+func (v *ParserValueString) GetInt() (int64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_INT, PARSER_VALUE_TYPE_STRING)
+}
+
+func (v *ParserValueString) GetUInt() (uint64, error) {
+  return 0, WrongTypeError(PARSER_VALUE_TYPE_UINT, PARSER_VALUE_TYPE_STRING)
 }
 
 func (v *ParserValueString) GetBool() (bool, error) {
