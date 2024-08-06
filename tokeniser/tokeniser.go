@@ -240,7 +240,7 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
-	if !unicode.IsLetter(initial) {
+	if !isLegalWordStart(initial) {
     return "", t.FormatErrorAt("Expected letter to start a word", loc)
 	}
 
@@ -249,7 +249,7 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	for {
 		next := t.Peek()
 
-		if unicode.IsLetter(next) || (unicode.IsNumber(next) && len(word) > 0) {
+		if isLegalWordStart(next) || (isAsciiDigit(next) && len(word) > 0) {
 			word += string(next)
 			t.Increment()
 		} else {
@@ -264,7 +264,7 @@ func (t *Tokeniser) ReadNumber() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
-	if !unicode.IsDigit(initial) && initial != '-' && initial != '.' {
+	if !isAsciiDigit(initial) && initial != '-' && initial != '.' {
 		return "", t.FormatErrorAt("Expected digit to start a number", loc)
 	}
 
@@ -343,6 +343,18 @@ func (t *Tokeniser) FormatError(message string) error {
 	return fmt.Errorf(fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message))
 }
 
+func isAsciiDigit(c rune) bool {
+  return c >= '0' && c <= '9'
+}
+
+func isLatin(c rune) bool {
+  return unicode.Is(unicode.Latin, c)
+}
+
+func isLegalWordStart(c rune) bool {
+  return isLatin(c) || c == '_'
+}
+
 func (t *Tokeniser) Tokenise() ([]Token, error) {
 	tokens := []Token{}
 
@@ -358,7 +370,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			break
 		}
 
-		if unicode.IsLetter(c) {
+		if isLegalWordStart(c) {
 			word, error := t.ReadWord()
 
       if error != nil { return nil, error }
@@ -368,7 +380,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))
 			}
-		} else if unicode.IsDigit(c) || c == '-' || c == '.' {
+		} else if isAsciiDigit(c) || c == '-' || c == '.' {
 			number, error := t.ReadNumber()
 
       if error != nil { return nil, error }
