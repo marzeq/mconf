@@ -4,6 +4,18 @@ this is my own configuration language, made mostly for fun and to learn more abo
 
 if you have any suggestions, feedback or questions, feel free to contact me in any way you want (open an issue here, message me on any platform, etc.)
 
+## building & running
+
+this repo comes with a justfile, so you can use [just](https://github.com/casey/just) to run the commands
+
+```sh
+just run # runs the project, equivalent to `go run .`
+just build # builds the project in build/current-arch, equivalent to `go build .`
+just build-all # builds the project for every combination of: windows, darwin (macos) and linux & amd64 and arm64
+```
+
+if you don't want to use just, you can always use the go commands directly
+
 ## spec
 
 note that mconf fully suppports unicode, so a letter means any unicode latin letter and not just ascii letters, and string values can contain any unicode character
@@ -57,7 +69,11 @@ also_a_bool = false
 
 ```conf
 list = [1, 2, 3, "abc", true, false]
-two_dimensional_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+two_dimensional_list = [
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9
+]
 ```
 
 commas in lists are required
