@@ -2,15 +2,11 @@
 
 this is my own configuration language, made mostly for fun and to learn more about tokenisation and parsing
 
-for this reason, i wouldn't really use this implementation for anything serious, but you're welcome to use it if you want
-
-the syntax and design is a bit better, designing a config language is obviously easier than implementing it, and i think i've done a good job with it, but there may be a couple things you might find weird/not like
-
 if you have any suggestions, feedback or questions, feel free to contact me in any way you want (open an issue here, message me on any platform, etc.)
 
-## syntax
+## spec
 
-note that mconf fully suppports unicode, so a letter means any unicode letter and not just ascii letters, and string values can contain any unicode character
+note that mconf fully suppports unicode, so a letter means any unicode latin letter and not just ascii letters, and string values can contain any unicode character
 
 ### comments
 
@@ -23,44 +19,50 @@ note that mconf fully suppports unicode, so a letter means any unicode letter an
 ```conf
 key = "value"
 "strings as keys" = "are allowed"
-23abc = false # illegal, keys must start with a letter
+23abc = false # illegal, keys must start with a letter or underscore
+óóóó_unicode = true
 ```
 
 ### string values
 
 ```conf
-foo = "bar"
-def = "123
+a_str = "bar"
+multiline_str = "123
 456"
-ghi = "\"escaped quotes\""
+escapes = "\"escaped quotes\""
+unicode = "😊"
 ```
 
 ### numerical values
 
 ```conf
 # integer value
-foo = 123
-# float value (tokenised the same but may be parsed differently depending on the target language)
-bar = 123.456
+an_int = 123
+# signed integer value
+a_uint = -123
+# float value (tokenised the same way but may be parsed as a different value depending on the implementation)
+a_float = 123.456
+# fancy floats
+fancy_float = .5
 ```
 
 ### boolean values
 
 ```conf
-deez = true
-nuts = false
+a_bool = true
+also_a_bool = false
 ```
 
-### lists
+### list values
 
 ```conf
-list = [1, 2, 3, "abc", 'def', true, false]
+list = [1, 2, 3, "abc", true, false]
 two_dimensional_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 ```
 
 commas in lists are required
 
-### objects/dictionaries/maps/(whatever you want to call them)
+### object values
 
 ```conf
 object = {
@@ -77,7 +79,7 @@ nested_object_and_list = {
 }
 ```
 
-commas in objects are optional, but you can use them if you want (especially useful for vim as without them, the builtin indenter gets confused)
+commas in objects are optional, but you can use them if you want
 
 ```conf
 object = {
@@ -119,6 +121,14 @@ $some_constant = 123
 abc = $some_constant
 ```
 
+## quirks of this particular parser
+
+### numbers
+
+- if a number does not contain either a `.` or a `-`, it will be parsed as a `uint64`, and if it overflows, it will be reset back to the max `uint64` value
+- if a number does not contain a `.` but contains a `-`, it will be parsed as a `int64`, and if it overflows or underflows, it will be reset back to the max `int64` value
+- otherwise, the number will be parsed as a float, and no bounds checking will be done
+
 ## license
 
-do whatever with this, i don't care
+[do whatever with this, i don't care](./LICENSE)
