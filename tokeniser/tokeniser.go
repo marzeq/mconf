@@ -240,7 +240,7 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
-	if !isLegalWordStart(initial) {
+	if !IsLegalWordStart(initial) {
     return "", t.FormatErrorAt("Expected letter to start a word", loc)
 	}
 
@@ -249,7 +249,7 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	for {
 		next := t.Peek()
 
-		if isLegalWordStart(next) || (isAsciiDigit(next) && len(word) > 0) {
+		if IsLegalWordStart(next) || (IsAsciiDigit(next) && len(word) > 0) {
 			word += string(next)
 			t.Increment()
 		} else {
@@ -264,7 +264,7 @@ func (t *Tokeniser) ReadNumber() (string, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
-	if !isAsciiDigit(initial) && initial != '-' && initial != '.' {
+	if !IsAsciiDigit(initial) && initial != '-' && initial != '.' {
 		return "", t.FormatErrorAt("Expected digit to start a number", loc)
 	}
 
@@ -343,16 +343,30 @@ func (t *Tokeniser) FormatError(message string) error {
 	return fmt.Errorf(fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message))
 }
 
-func isAsciiDigit(c rune) bool {
+func IsAsciiDigit(c rune) bool {
   return c >= '0' && c <= '9'
 }
 
-func isLatin(c rune) bool {
+func IsLatin(c rune) bool {
   return unicode.Is(unicode.Latin, c)
 }
 
-func isLegalWordStart(c rune) bool {
-  return isLatin(c) || c == '_'
+func IsLegalWordStart(c rune) bool {
+  return IsLatin(c) || c == '_'
+}
+
+func IsLegalWord(cs []rune) bool {
+  for i, c := range cs {
+    if i == 0 && !IsLegalWordStart(c) {
+      return false
+    }
+
+    if !IsLegalWordStart(c) && !IsAsciiDigit(c) {
+      return false
+    }
+  }
+
+  return true
 }
 
 func (t *Tokeniser) Tokenise() ([]Token, error) {
@@ -370,7 +384,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			break
 		}
 
-		if isLegalWordStart(c) {
+		if IsLegalWordStart(c) {
 			word, error := t.ReadWord()
 
       if error != nil { return nil, error }
@@ -380,7 +394,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))
 			}
-		} else if isAsciiDigit(c) || c == '-' || c == '.' {
+		} else if IsAsciiDigit(c) || c == '-' || c == '.' {
 			number, error := t.ReadNumber()
 
       if error != nil { return nil, error }

@@ -2,7 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"strings"
+  "strings"
+
+	"github.com/marzeq/mconf/tokeniser"
 )
 
 type ParserValueObject struct {
@@ -23,6 +25,10 @@ func (v *ParserValueObject) OneLineStringValue() string {
   keycount := 0
 
   for k, val := range v.Value {
+    if !tokeniser.IsLegalWord([]rune(k)) {
+      k = fmt.Sprintf("\"%s\"", k)
+    }
+
     s += fmt.Sprintf("%s = %s", k, val.ValueToString())
 
     if keycount < len(v.Value) - 1 {
@@ -69,9 +75,12 @@ func (v *ParserValueObject) ValueToString(indentAndDepth ...int) string {
   currindent := strings.Repeat(indent, depth)
 
   for k, val := range v.Value {
+        if !tokeniser.IsLegalWord([]rune(k)) {
+      k = fmt.Sprintf("\"%s\"", k)
+    }
+
     s += fmt.Sprintf("%s%s = %s\n", currindent, k, val.ValueToString(indentSize, depth + 1))
    
-
     keycount++
   }
 
