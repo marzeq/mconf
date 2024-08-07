@@ -22,22 +22,22 @@ note that mconf fully suppports unicode, so a letter means any unicode latin let
 
 ### comments
 
-```conf
+```mconf
 # this is a comment
 ```
 
 ### keys
 
-```conf
+```mconf
 key = "value"
 "strings as keys" = "are allowed"
-23abc = false # illegal, keys must start with a letter or underscore
 óóóó_unicode = true
+23abc = false # illegal, keys must start with a letter or underscore
 ```
 
 ### string values
 
-```conf
+```mconf
 a_str = "bar"
 multiline_str = "123
 456"
@@ -47,7 +47,7 @@ unicode = "😊"
 
 ### numerical values
 
-```conf
+```mconf
 # integer value
 an_int = 123
 # signed integer value
@@ -60,19 +60,19 @@ fancy_float = .5
 
 ### boolean values
 
-```conf
+```mconf
 a_bool = true
 also_a_bool = false
 ```
 
 ### list values
 
-```conf
+```mconf
 list = [1, 2, 3, "abc", true, false]
 two_dimensional_list = [
   [1, 2, 3],
   [4, 5, 6],
-  [7, 8, 9
+  [7, 8, 9]
 ]
 ```
 
@@ -80,7 +80,7 @@ commas in lists are required
 
 ### object values
 
-```conf
+```mconf
 object = {
   foo = "bar"
   bar = 123
@@ -97,7 +97,7 @@ nested_object_and_list = {
 
 commas in objects are optional, but you can use them if you want
 
-```conf
+```mconf
 object = {
   foo = "bar",
   bar = 123,
@@ -111,7 +111,7 @@ this is a a neat way to organise your file, where if you put an object at the to
 
 you can think of this as a way to split the file into sections of multiple related keys
 
-```conf
+```mconf
 {
   foo = 123
   bar = 123
@@ -124,7 +124,7 @@ you can think of this as a way to split the file into sections of multiple relat
 
 is equivalent to
 
-```conf
+```mconf
 foo = 123
 bar = 123
 baz = 123
@@ -132,7 +132,7 @@ baz = 123
 
 ### constants
 
-```conf
+```mconf
 $some_constant = 123 
 abc = $some_constant
 ```
