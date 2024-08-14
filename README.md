@@ -14,7 +14,7 @@ just build # builds the project in build/current-arch, equivalent to `go build .
 just build-all # builds the project for every combination of: windows, darwin (macos) and linux & amd64 and arm64
 ```
 
-if you don't want to use just, you can always use the go commands directly
+if you don't want to use just, you can always use the go build and go run commands directly
 
 ## spec
 
