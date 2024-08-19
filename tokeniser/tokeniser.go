@@ -18,6 +18,7 @@ const (
 	TOKEN_TYPE_COMMA      = "COMMA"
 	TOKEN_TYPE_OPEN_OBJ   = "OPEN_OBJ"
 	TOKEN_TYPE_CLOSE_OBJ  = "CLOSE_OBJ"
+  TOKEN_TYPE_KEYWORD    = "KEYWORD"
 
   TOKEN_TYPE_EOF = "EOF"
 )
@@ -141,6 +142,14 @@ func CloseObjToken(start Location) Token {
 		Value:     NO_VALUE,
 		Start:     start,
 	}
+}
+
+func KeywordToken(value string, start Location) Token {
+  return Token{
+    Type: TOKEN_TYPE_KEYWORD,
+    Value:     value,
+    Start:     start,
+  }
 }
 
 func EOFToken() Token {
@@ -419,6 +428,12 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
         if error != nil { return nil, error }
 
 				tokens = append(tokens, ConstantToken(word, loc))
+      } else if c == '@' {
+        word, error := t.ReadWord()
+
+        if error != nil { return nil, error }
+
+        tokens = append(tokens, KeywordToken(word, loc))
 			} else if c == '[' {
 				tokens = append(tokens, OpenListToken(loc))
 			} else if c == ']' {

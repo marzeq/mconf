@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 
@@ -288,6 +289,37 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
       for k, v := range object {
         globalObject[k] = v
+      }
+    }
+    case tokeniser.TOKEN_TYPE_KEYWORD: {
+      switch token.Value {
+      case "include": {
+        includePath := p.Consume()
+
+        if includePath.Type != tokeniser.TOKEN_TYPE_STRING {
+          return nil, p.FormatErrorAtToken("Expected string path to include", includePath.Start)
+        }
+
+        f, err := os.ReadFile(includePath.Value)
+        
+        if err != nil { return nil, err }
+
+        s := string(f)
+
+        t := tokeniser.NewTokeniser(s)
+        tokens, err := t.Tokenise()
+
+        if err != nil { return nil, err }
+
+        p2 := NewParser(tokens)
+        object, err := p2.Parse()
+
+        if err != nil { return nil, err }
+
+        for k, v := range object {
+          globalObject[k] = v
+        }
+      }
       }
     }
     default: {

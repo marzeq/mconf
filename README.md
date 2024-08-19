@@ -137,6 +137,17 @@ $some_constant = 123
 abc = $some_constant
 ```
 
+### includes
+
+files can include other files, and the included file will be parsed and merged with the current file
+
+```mconf
+@include "other_file.mconf"
+```
+
+inclusion is in an early stage in development, so you cannot access the included file's keys or constants in the current file, it's final parsed global object will be merged with the current file's global object
+
+
 ## quirks of this particular parser
 
 ### numbers
