@@ -46,14 +46,6 @@ func ParseFromBytes(b []byte) (map[string]parser.ParserValue, error) {
   return ParseFromString(s)
 }
 
-func hasStdin() bool {
-  fi, err := os.Stdin.Stat()
-  
-  if err != nil { return false }
-
-  return (fi.Mode() & os.ModeCharDevice) == 0
-}
-
 func readStdin() ([]byte, error) {
   b, err := io.ReadAll(os.Stdin)
 
@@ -67,34 +59,29 @@ type options struct {
   AcessedProperties []string
 }
 
-func usage() string {
-  return `Usage:
-  mconf <filename> [properties ...]
-or:
-  echo "<text>" | mconf [properties ...]
+func usage(progname string) string {
+  return fmt.Sprintf(`Usage:
+  %s <filename> [properties ...]
+  %s - [properties ...]
 
-Example:
-  mconf config.mconf property1 property2
-or:
-  cat config.mconf | mconf property1 property2`
+Arguments:
+  <filename>        Path to the configuration file. Use '-' to read from stdin.
+  [properties ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed.
+
+Examples:
+  %s config.mconf property1 property2
+  cat config.mconf | %s - property1 property2`, progname, progname, progname, progname)
 }
 
 func parseOptions() (options, string) {
-  var opts options 
-
-  if !hasStdin() && len(os.Args) == 1 {
-    return opts, usage()
+  if len(os.Args) == 1 {
+    return options{}, usage(os.Args[0])
   }
 
-  if hasStdin() {
-    opts.Filename = ""
-    opts.AcessedProperties = os.Args[1:]
-  } else {
-    opts.Filename = os.Args[1]
-    opts.AcessedProperties = os.Args[2:]
-  }
-
-  return opts,"" 
+  return options{
+    Filename: os.Args[1],
+    AcessedProperties: os.Args[2:],
+  }, ""
 }
 
 func main() {
@@ -108,7 +95,7 @@ func main() {
   var m map[string]parser.ParserValue
   var parsingErr error
 
-  if opts.Filename == "" {
+  if opts.Filename == "-" {
     b, err := readStdin()
     check(err)
 
