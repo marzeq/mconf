@@ -4,8 +4,8 @@ default:
 builddir := "build"
 
 build:
-  mkdir -p {{builddir}}/current-arch
-  go build -o {{builddir}}/current-arch/mconf .
+  mkdir -p {{builddir}}/current-target
+  go build -o {{builddir}}/current-target/mconf .
 
 build-target OS ARCH:
   mkdir -p {{builddir}}/{{OS}}-{{ARCH}}
