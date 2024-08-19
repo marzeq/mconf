@@ -147,6 +147,14 @@ files can include other files, and the included file will be parsed and merged w
 
 inclusion is in an early stage in development, so you cannot access the included file's keys or constants in the current file, it's final parsed global object will be merged with the current file's global object
 
+## todo:
+
+- [ ] support for formatted strings that allow for inserting constants into the string like `foo = f"bar ${baz}"` (where baz is a previously defined constant)
+- [ ] merge current env vars with the constants
+- [ ] support for specifying which keys to include with syntax like `@include { key1, key2 } "other_file.mconf"`
+- [ ] when using `@include`, merge the included file's constants with the current file's constants, and as a logical result, also allow for specyfing which constants to include in the syntax above
+- [ ] allow the use of the `@include` directive as a value with syntax like `foo = @include bar "other_file.mconf"`
+- [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
 
 ## quirks of this particular parser
 
