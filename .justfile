@@ -8,8 +8,8 @@ build:
   go build -o {{builddir}}/current-target/mconf .
 
 build-target OS ARCH:
-  mkdir -p {{builddir}}/{{OS}}-{{ARCH}}
-  GOOS={{OS}} GOARCH={{ARCH}} go build -o {{builddir}}/{{OS}}-{{ARCH}}/mconf .
+  mkdir -p {{builddir}}/{{OS}}/{{ARCH}}
+  GOOS={{OS}} GOARCH={{ARCH}} go build -o {{builddir}}/{{OS}}/{{ARCH}}/mconf{{ if OS == "windows" { ".exe" } else { "" } }}
 
 build-all: \
   (build-target "windows" "amd64") \
