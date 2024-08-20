@@ -37,33 +37,43 @@ type ParserValue interface {
 }
 
 type Parser struct {
-	tokens             []tokeniser.Token
-	currIndex          int
-	constants          map[string]ParserValue
-	rootDir            string
-	currentFile        string
-	previouslyIncluded []string
+	tokens      []tokeniser.Token
+	currIndex   int
+	constants   map[string]ParserValue
+	rootDir     string
+	currentFile string
+	importCache *map[string]map[string]ParserValue
 }
 
 func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string) Parser {
+	importCache := make(map[string]map[string]ParserValue)
+
+	fullFile := filepath.Join(rootDir, currentFile)
+
+	importCache[fullFile] = make(map[string]ParserValue)
+
 	return Parser{
-		tokens:             tokens,
-		currIndex:          0,
-		constants:          make(map[string]ParserValue),
-		rootDir:            rootDir,
-		currentFile:        currentFile,
-		previouslyIncluded: []string{currentFile},
+		tokens:      tokens,
+		currIndex:   0,
+		constants:   make(map[string]ParserValue),
+		rootDir:     rootDir,
+		currentFile: currentFile,
+		importCache: &importCache,
 	}
 }
 
 func (p *Parser) ChildParser(tokens []tokeniser.Token, currentFile string) Parser {
+	fullFile := filepath.Join(p.rootDir, currentFile)
+
+	(*p.importCache)[fullFile] = make(map[string]ParserValue)
+
 	return Parser{
-		tokens:             tokens,
-		currIndex:          0,
-		constants:          p.constants,
-		rootDir:            p.rootDir,
-		currentFile:        currentFile,
-		previouslyIncluded: append(p.previouslyIncluded, currentFile),
+		tokens:      tokens,
+		currIndex:   0,
+		constants:   p.constants,
+		rootDir:     p.rootDir,
+		currentFile: currentFile,
+		importCache: p.importCache,
 	}
 }
 
@@ -105,10 +115,10 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) erro
 	}
 
 	if loc.Line == 0 && loc.Col == 0 {
-		return fmt.Errorf(fmt.Sprintf("%s - Parser error at EOF: %s\n", prettyFile, message))
+		return fmt.Errorf(fmt.Sprintf("%s - Parser error at EOF: %s", prettyFile, message))
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s - Parser error at line %d, col %d: %s\n", prettyFile, loc.Line, loc.Col, message))
+	return fmt.Errorf(fmt.Sprintf("%s - Parser error at line %d, col %d: %s", prettyFile, loc.Line, loc.Col, message))
 }
 
 func (p *Parser) ParseValue() (ParserValue, error) {
@@ -279,7 +289,7 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 }
 
 func (p *Parser) Parse() (map[string]ParserValue, error) {
-	globalObject := make(map[string]ParserValue)
+	globalObject := (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)]
 
 	for {
 		token := p.Consume()
@@ -334,33 +344,28 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 					globalObject[k] = v
 				}
 			}
-		case tokeniser.TOKEN_TYPE_KEYWORD:
+		case tokeniser.TOKEN_TYPE_DIRECTIVE:
 			{
 				switch token.Value {
-				case "include":
+				case "import":
 					{
-						includePath := p.Consume()
+						importPath := p.Consume()
 
-						if includePath.Type != tokeniser.TOKEN_TYPE_STRING {
-							return nil, p.FormatErrorAtToken("Expected string path to include", includePath.Start)
+						if importPath.Type != tokeniser.TOKEN_TYPE_STRING {
+							return nil, p.FormatErrorAtToken("Expected string path to import", importPath.Start)
 						}
 
-						if includePath.Value == p.currentFile {
-							return nil, p.FormatErrorAtToken("Cannot include the file itself", includePath.Start)
+						if importPath.Value == p.currentFile {
+							return nil, p.FormatErrorAtToken("Cannot import the same file", importPath.Start)
 						}
 
-						fullFilePath := filepath.Join(p.rootDir, includePath.Value)
+						fullFilePath := filepath.Join(p.rootDir, importPath.Value)
 						relative, err := filepath.Rel(p.rootDir, fullFilePath)
 
-						alreadyIncluded := false
-						for _, prev := range p.previouslyIncluded {
-							if prev == relative {
-								alreadyIncluded = true
-								break
+						if _, ok := (*p.importCache)[fullFilePath]; ok {
+							for k, v := range (*p.importCache)[fullFilePath] {
+								globalObject[k] = v
 							}
-						}
-
-						if alreadyIncluded {
 							continue
 						}
 
@@ -383,9 +388,15 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 							return nil, err
 						}
 
+						(*p.importCache)[fullFilePath] = object
+
 						for k, v := range object {
 							globalObject[k] = v
 						}
+					}
+				default:
+					{
+						return nil, p.FormatErrorAtToken(fmt.Sprintf("Unknown directive `%s`", token.Value), token.Start)
 					}
 				}
 			}

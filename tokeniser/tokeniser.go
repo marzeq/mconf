@@ -288,13 +288,15 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 					return nil, error
 				}
 
-				tokens = append(tokens, KeywordToken(word, loc))
+				tokens = append(tokens, DirectiveToken(word, loc))
 			} else if c == '[' {
 				tokens = append(tokens, OpenListToken(loc))
 			} else if c == ']' {
 				tokens = append(tokens, CloseListToken(loc))
 			} else if c == ',' {
 				tokens = append(tokens, CommaToken(loc))
+			} else if c == ':' {
+				tokens = append(tokens, ColonToken(loc))
 			} else if c == '{' {
 				tokens = append(tokens, OpenObjToken(loc))
 			} else if c == '}' {
