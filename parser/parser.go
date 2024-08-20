@@ -37,20 +37,33 @@ type ParserValue interface {
 }
 
 type Parser struct {
-	tokens      []tokeniser.Token
-	currIndex   int
-	constants   map[string]ParserValue
-	rootDir     string
-	currentFile string
+	tokens             []tokeniser.Token
+	currIndex          int
+	constants          map[string]ParserValue
+	rootDir            string
+	currentFile        string
+	previouslyIncluded []string
 }
 
 func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string) Parser {
 	return Parser{
-		tokens:      tokens,
-		currIndex:   0,
-		constants:   make(map[string]ParserValue),
-		rootDir:     rootDir,
-		currentFile: currentFile,
+		tokens:             tokens,
+		currIndex:          0,
+		constants:          make(map[string]ParserValue),
+		rootDir:            rootDir,
+		currentFile:        currentFile,
+		previouslyIncluded: []string{currentFile},
+	}
+}
+
+func (p *Parser) ChildParser(tokens []tokeniser.Token, currentFile string) Parser {
+	return Parser{
+		tokens:             tokens,
+		currIndex:          0,
+		constants:          p.constants,
+		rootDir:            p.rootDir,
+		currentFile:        currentFile,
+		previouslyIncluded: append(p.previouslyIncluded, currentFile),
 	}
 }
 
@@ -332,20 +345,39 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 							return nil, p.FormatErrorAtToken("Expected string path to include", includePath.Start)
 						}
 
-						f, err := os.ReadFile(filepath.Join(p.rootDir, includePath.Value))
+						if includePath.Value == p.currentFile {
+							return nil, p.FormatErrorAtToken("Cannot include the file itself", includePath.Start)
+						}
+
+						fullFilePath := filepath.Join(p.rootDir, includePath.Value)
+						relative, err := filepath.Rel(p.rootDir, fullFilePath)
+
+						alreadyIncluded := false
+						for _, prev := range p.previouslyIncluded {
+							if prev == relative {
+								alreadyIncluded = true
+								break
+							}
+						}
+
+						if alreadyIncluded {
+							continue
+						}
+
+						f, err := os.ReadFile(fullFilePath)
 						if err != nil {
 							return nil, err
 						}
 
 						s := string(f)
 
-						t := tokeniser.NewTokeniser(s, includePath.Value)
+						t := tokeniser.NewTokeniser(s, relative)
 						tokens, err := t.Tokenise()
 						if err != nil {
 							return nil, err
 						}
 
-						p2 := NewParser(tokens, p.rootDir, includePath.Value)
+						p2 := p.ChildParser(tokens, relative)
 						object, err := p2.Parse()
 						if err != nil {
 							return nil, err
