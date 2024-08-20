@@ -6,166 +6,13 @@ import (
 	"unicode"
 )
 
-const (
-	TOKEN_TYPE_KEY        = "KEY"
-	TOKEN_TYPE_CONSTANT   = "CONSTANT"
-	TOKEN_TYPE_ASSIGN     = "ASSIGN"
-	TOKEN_TYPE_NUMBER     = "NUMBER"
-	TOKEN_TYPE_STRING     = "STRING"
-	TOKEN_TYPE_BOOL       = "BOOL"
-	TOKEN_TYPE_OPEN_LIST  = "OPEN_LIST"
-	TOKEN_TYPE_CLOSE_LIST = "CLOSE_LIST"
-	TOKEN_TYPE_COMMA      = "COMMA"
-	TOKEN_TYPE_OPEN_OBJ   = "OPEN_OBJ"
-	TOKEN_TYPE_CLOSE_OBJ  = "CLOSE_OBJ"
-  TOKEN_TYPE_KEYWORD    = "KEYWORD"
-
-  TOKEN_TYPE_EOF = "EOF"
-)
-
-const (
-	NO_VALUE = "NO_VALUE"
-)
-
-type Location struct {
-	Line int
-	Col  int
-}
-
-func (l Location) Repr() string {
-	return fmt.Sprintf("Location{Line: %d, Col: %d}", l.Line, l.Col)
-}
-
-type Token struct {
-	Type string
-	Value     string
-	Start     Location
-}
-
-func (t Token) Repr() string {
-	if t.Value == NO_VALUE {
-		return fmt.Sprintf(`Token{
-  Type: %s,
-  Location: %s
-}`, t.Type, t.Start.Repr())
-	}
-	return fmt.Sprintf(`Token{
-  Type: %s,
-  Value: %s,
-  Location: %s
-}`, t.Type, t.Value, t.Start.Repr())
-}
-
-func KeyToken(value string, start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_KEY,
-		Value:     value,
-		Start:     start,
-	}
-}
-
-func ConstantToken(value string, start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_CONSTANT,
-		Value:     value,
-		Start:     start,
-	}
-}
-
-func AssignToken(start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_ASSIGN,
-		Value:     NO_VALUE,
-		Start:     start,
-	}
-}
-
-func NumberToken(value string, start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_NUMBER,
-		Value:     value,
-		Start:     start,
-	}
-}
-
-func StringToken(value string, start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_STRING,
-		Value:     value,
-		Start:     start,
-	}
-}
-
-func BoolToken(value string, start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_BOOL,
-		Value:     value,
-		Start:     start,
-	}
-}
-
-func OpenListToken(start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_OPEN_LIST,
-		Value:     NO_VALUE,
-		Start:     start,
-	}
-}
-
-func CloseListToken(start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_CLOSE_LIST,
-		Value:     NO_VALUE,
-		Start:     start,
-	}
-}
-
-func CommaToken(start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_COMMA,
-		Value:     NO_VALUE,
-		Start:     start,
-	}
-}
-
-func OpenObjToken(start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_OPEN_OBJ,
-		Value:     NO_VALUE,
-		Start:     start,
-	}
-}
-
-func CloseObjToken(start Location) Token {
-	return Token{
-		Type: TOKEN_TYPE_CLOSE_OBJ,
-		Value:     NO_VALUE,
-		Start:     start,
-	}
-}
-
-func KeywordToken(value string, start Location) Token {
-  return Token{
-    Type: TOKEN_TYPE_KEYWORD,
-    Value:     value,
-    Start:     start,
-  }
-}
-
-func EOFToken() Token {
-  return Token{
-    Type: TOKEN_TYPE_EOF,
-    Value:     NO_VALUE,
-    Start:     Location{0, 0},
-  }
-}
-
 type Tokeniser struct {
 	contents  []rune
 	currIndex int
+	filePath  string
 }
 
-func NewTokeniser(contents string) Tokeniser {
+func NewTokeniser(contents string, filePath string) Tokeniser {
 	return Tokeniser{
 		contents:  []rune(contents),
 		currIndex: 0,
@@ -233,7 +80,7 @@ func (t *Tokeniser) ReadString() (string, error) {
 			case 'f':
 				s += "\f"
 			default:
-        return "", t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc)
+				return "", t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc)
 			}
 		} else if c == initial {
 			break
@@ -250,7 +97,7 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	initial := t.Consume()
 
 	if !IsLegalWordStart(initial) {
-    return "", t.FormatErrorAt("Expected letter to start a word", loc)
+		return "", t.FormatErrorAt("Expected letter to start a word", loc)
 	}
 
 	word := string(initial)
@@ -279,9 +126,9 @@ func (t *Tokeniser) ReadNumber() (string, error) {
 
 	number := string(initial)
 
-  if initial == '.' {
-    number = "0."
-  }
+	if initial == '.' {
+		number = "0."
+	}
 
 	for {
 		next := t.Peek()
@@ -292,7 +139,7 @@ func (t *Tokeniser) ReadNumber() (string, error) {
 		} else if next == '_' {
 			t.Increment()
 		} else if unicode.IsLetter(next) {
-			return "", t.FormatErrorAt(fmt.Sprintf("Unexpected character in number: `%c`", next), t.GetCurrLineAndCol())
+			return "", t.FormatError(fmt.Sprintf("Unexpected character in number: `%c`", next))
 		} else {
 			break
 		}
@@ -319,7 +166,7 @@ func (t *Tokeniser) IgnoreComment() error {
 		t.Increment()
 	}
 
-  return nil
+	return nil
 }
 
 func (t *Tokeniser) GetLineAndCol(index int) Location {
@@ -343,39 +190,37 @@ func (t *Tokeniser) GetCurrLineAndCol() Location {
 }
 
 func (t *Tokeniser) FormatErrorAt(message string, loc Location) error {
-	return fmt.Errorf(fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message))
+	return fmt.Errorf(fmt.Sprintf("%s - Tokeniser error at line %d, col %d: %s", t.filePath, loc.Line, loc.Col, message))
 }
 
 func (t *Tokeniser) FormatError(message string) error {
-	loc := t.GetCurrLineAndCol()
-
-	return fmt.Errorf(fmt.Sprintf("Tokeniser error at line %d, col %d: %s", loc.Line, loc.Col, message))
+	return t.FormatErrorAt(message, t.GetCurrLineAndCol())
 }
 
 func IsAsciiDigit(c rune) bool {
-  return c >= '0' && c <= '9'
+	return c >= '0' && c <= '9'
 }
 
 func IsLatin(c rune) bool {
-  return unicode.Is(unicode.Latin, c)
+	return unicode.Is(unicode.Latin, c)
 }
 
 func IsLegalWordStart(c rune) bool {
-  return IsLatin(c) || c == '_'
+	return IsLatin(c) || c == '_'
 }
 
 func IsLegalWord(cs []rune) bool {
-  for i, c := range cs {
-    if i == 0 && !IsLegalWordStart(c) {
-      return false
-    }
+	for i, c := range cs {
+		if i == 0 && !IsLegalWordStart(c) {
+			return false
+		}
 
-    if !IsLegalWordStart(c) && !IsAsciiDigit(c) {
-      return false
-    }
-  }
+		if !IsLegalWordStart(c) && !IsAsciiDigit(c) {
+			return false
+		}
+	}
 
-  return true
+	return true
 }
 
 func (t *Tokeniser) Tokenise() ([]Token, error) {
@@ -396,7 +241,9 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 		if IsLegalWordStart(c) {
 			word, error := t.ReadWord()
 
-      if error != nil { return nil, error }
+			if error != nil {
+				return nil, error
+			}
 
 			if word == "true" || word == "false" {
 				tokens = append(tokens, BoolToken(word, loc))
@@ -406,13 +253,17 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 		} else if IsAsciiDigit(c) || c == '-' || c == '.' {
 			number, error := t.ReadNumber()
 
-      if error != nil { return nil, error }
+			if error != nil {
+				return nil, error
+			}
 
 			tokens = append(tokens, NumberToken(number, loc))
 		} else if c == '"' {
 			parsed, error := t.ReadString()
 
-      if error != nil { return nil, error }
+			if error != nil {
+				return nil, error
+			}
 
 			tokens = append(tokens, StringToken(parsed, loc))
 		} else if c == '#' {
@@ -425,15 +276,19 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			} else if c == '$' {
 				word, error := t.ReadWord()
 
-        if error != nil { return nil, error }
+				if error != nil {
+					return nil, error
+				}
 
 				tokens = append(tokens, ConstantToken(word, loc))
-      } else if c == '@' {
-        word, error := t.ReadWord()
+			} else if c == '@' {
+				word, error := t.ReadWord()
 
-        if error != nil { return nil, error }
+				if error != nil {
+					return nil, error
+				}
 
-        tokens = append(tokens, KeywordToken(word, loc))
+				tokens = append(tokens, KeywordToken(word, loc))
 			} else if c == '[' {
 				tokens = append(tokens, OpenListToken(loc))
 			} else if c == ']' {
