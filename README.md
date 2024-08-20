@@ -137,9 +137,17 @@ $some_constant = 123
 abc = $some_constant
 ```
 
+#### environment variables
+
+enviorment variables are automatically loaded as any other constant
+
+```mconf
+user = $USER
+```
+
 ### import
 
-files can import other files, and the imported file will be parsed and merged with the current file
+files can import other files, and the imported file will be parsed and merged with the current file (constants are shared between the files as well)
 
 ```mconf
 @import "other_file.mconf"
@@ -150,7 +158,7 @@ in the case of an import cycle, the file that is second in the chain will only h
 ## todo:
 
 - [ ] support for formatted strings that allow for inserting constants into the string like `foo = f"bar ${baz}"` (where baz is a previously defined constant)
-- [ ] merge current env vars with the constants
+- [x] merge current env vars with the constants
 - [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
 
 ## quirks of this particular parser

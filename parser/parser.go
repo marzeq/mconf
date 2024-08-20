@@ -36,45 +36,66 @@ type ParserValue interface {
 	GetObject() (map[string]ParserValue, error)
 }
 
+type importCacheEntry struct {
+	values    map[string]ParserValue
+	constants map[string]ParserValue
+}
+
 type Parser struct {
 	tokens      []tokeniser.Token
 	currIndex   int
-	constants   map[string]ParserValue
 	rootDir     string
 	currentFile string
-	importCache *map[string]map[string]ParserValue
+	importCache *map[string]importCacheEntry
 }
 
 func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string) Parser {
-	importCache := make(map[string]map[string]ParserValue)
+	importCache := make(map[string]importCacheEntry)
 
 	fullFile := filepath.Join(rootDir, currentFile)
 
-	importCache[fullFile] = make(map[string]ParserValue)
+	importCache[fullFile] = importCacheEntry{
+		values:    make(map[string]ParserValue),
+		constants: make(map[string]ParserValue),
+	}
+
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		importCache[fullFile].constants[pair[0]] = &ParserValueString{Value: pair[1]}
+	}
 
 	return Parser{
 		tokens:      tokens,
 		currIndex:   0,
-		constants:   make(map[string]ParserValue),
 		rootDir:     rootDir,
 		currentFile: currentFile,
 		importCache: &importCache,
 	}
 }
 
-func (p *Parser) ChildParser(tokens []tokeniser.Token, currentFile string) Parser {
+func (p *Parser) childParser(tokens []tokeniser.Token, currentFile string) Parser {
 	fullFile := filepath.Join(p.rootDir, currentFile)
 
-	(*p.importCache)[fullFile] = make(map[string]ParserValue)
+	(*p.importCache)[fullFile] = importCacheEntry{
+		values:    make(map[string]ParserValue),
+		constants: make(map[string]ParserValue),
+	}
 
 	return Parser{
 		tokens:      tokens,
 		currIndex:   0,
-		constants:   p.constants,
 		rootDir:     p.rootDir,
 		currentFile: currentFile,
 		importCache: p.importCache,
 	}
+}
+
+func (p *Parser) GetValues() map[string]ParserValue {
+	return (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)].values
+}
+
+func (p *Parser) GetConstants() map[string]ParserValue {
+	return (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)].constants
 }
 
 func (p *Parser) PeekAhead(i int) tokeniser.Token {
@@ -171,7 +192,7 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 
 		return &ParserValueBool{Value: converted}, nil
 	case tokeniser.TOKEN_TYPE_CONSTANT:
-		value, ok := p.constants[token.Value]
+		value, ok := p.GetConstants()[token.Value]
 
 		if !ok {
 			return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
@@ -289,14 +310,12 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 }
 
 func (p *Parser) Parse() (map[string]ParserValue, error) {
-	globalObject := (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)]
-
 	for {
 		token := p.Consume()
 
 		switch token.Type {
 		case tokeniser.TOKEN_TYPE_EOF:
-			return globalObject, nil
+			return p.GetValues(), nil
 		case tokeniser.TOKEN_TYPE_KEY:
 			fallthrough
 		case tokeniser.TOKEN_TYPE_STRING:
@@ -314,7 +333,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 					return nil, err
 				}
 
-				globalObject[key] = value
+				p.GetValues()[key] = value
 			}
 		case tokeniser.TOKEN_TYPE_CONSTANT:
 			{
@@ -331,7 +350,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 					return nil, err
 				}
 
-				p.constants[key] = value
+				p.GetConstants()[key] = value
 			}
 		case tokeniser.TOKEN_TYPE_OPEN_OBJ:
 			{
@@ -341,7 +360,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 				}
 
 				for k, v := range object {
-					globalObject[k] = v
+					p.GetValues()[k] = v
 				}
 			}
 		case tokeniser.TOKEN_TYPE_DIRECTIVE:
@@ -362,9 +381,15 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 						fullFilePath := filepath.Join(p.rootDir, importPath.Value)
 						relative, err := filepath.Rel(p.rootDir, fullFilePath)
 
-						if _, ok := (*p.importCache)[fullFilePath]; ok {
-							for k, v := range (*p.importCache)[fullFilePath] {
-								globalObject[k] = v
+						ic, icOk := (*p.importCache)[fullFilePath]
+
+						if icOk {
+							for k, v := range ic.values {
+								p.GetValues()[k] = v
+							}
+
+							for k, v := range ic.constants {
+								p.GetConstants()[k] = v
 							}
 							continue
 						}
@@ -377,21 +402,25 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 						s := string(f)
 
 						t := tokeniser.NewTokeniser(s, relative)
-						tokens, err := t.Tokenise()
-						if err != nil {
-							return nil, err
+						tokens, errTokenise := t.Tokenise()
+						if errTokenise != nil {
+							return nil, errTokenise
 						}
 
-						p2 := p.ChildParser(tokens, relative)
-						object, err := p2.Parse()
-						if err != nil {
-							return nil, err
+						p2 := p.childParser(tokens, relative)
+						_, errParse := p2.Parse()
+						if errParse != nil {
+							return nil, errParse
 						}
 
-						(*p.importCache)[fullFilePath] = object
+						ic, icOk = (*p.importCache)[fullFilePath]
 
-						for k, v := range object {
-							globalObject[k] = v
+						for k, v := range ic.values {
+							p.GetValues()[k] = v
+						}
+
+						for k, v := range ic.constants {
+							p.GetConstants()[k] = v
 						}
 					}
 				default:
@@ -407,5 +436,5 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 		}
 	}
 
-	return globalObject, nil
+	return p.GetValues(), nil
 }
