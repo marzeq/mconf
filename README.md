@@ -155,10 +155,37 @@ files can import other files, and the imported file will be parsed and merged wi
 
 in the case of an import cycle, the file that is second in the chain will only have access to the properties of the first file that were defined before the import
 
+#### specific import
+
+you can specify exactly what you want to import from a file
+
+`a.mconf`:
+```mconf
+@import { foo, $bar, baz.bar } "b.mconf"
+a = $bar
+```
+
+`b.mconf`:
+```mconf
+foo = 123
+$bar = 456
+baz = {
+  bar = 789
+}
+```
+
+will result in:
+```mconf
+foo = 123
+bar = 789
+a = 456
+```
+
 ## todo:
 
 - [ ] support for formatted strings that allow for inserting constants into the string like `foo = f"bar ${baz}"` (where baz is a previously defined constant)
 - [x] merge current env vars with the constants
+- [x] allow for specifying what exactly to import from a file
 - [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
 
 ## quirks of this particular parser

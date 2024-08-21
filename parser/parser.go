@@ -142,6 +142,28 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) erro
 	return fmt.Errorf(fmt.Sprintf("%s - Parser error at line %d, col %d: %s", prettyFile, loc.Line, loc.Col, message))
 }
 
+func (p *Parser) ParseDeepKey() ([]string, error) {
+	key := make([]string, 0)
+
+	for {
+		token := p.Consume()
+
+		if token.Type == tokeniser.TOKEN_TYPE_KEY || token.Type == tokeniser.TOKEN_TYPE_STRING {
+			key = append(key, token.Value)
+		}
+
+		next := p.Peek()
+
+		if next.Type == tokeniser.TOKEN_TYPE_DOT {
+			p.Increment()
+		} else {
+			break
+		}
+	}
+
+	return key, nil
+}
+
 func (p *Parser) ParseValue() (ParserValue, error) {
 	token := p.Consume()
 
@@ -309,6 +331,51 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 	return object, nil
 }
 
+func (p *Parser) SmartlySetValuesAndConstants(importEverything bool, importPaths [][]string, importConstants []string, ic importCacheEntry, errorLoc tokeniser.Location, importPath string) error {
+	if importEverything {
+		for k, v := range ic.values {
+			p.GetValues()[k] = v
+		}
+
+		for k, v := range ic.constants {
+			p.GetConstants()[k] = v
+		}
+	} else {
+		for _, path := range importPaths {
+			current := ic.values
+
+			for i, key := range path {
+				indexedVal, ok := current[key]
+				if !ok {
+					joinedPath := strings.Join(path[:i+1], ".")
+					return p.FormatErrorAtToken(fmt.Sprintf("Path `%s` not found in imported file %s", joinedPath, importPath), errorLoc)
+				}
+
+				if i == len(path)-1 {
+					p.GetValues()[key] = indexedVal
+					break
+				}
+
+				got, err := indexedVal.GetObject()
+				if err != nil {
+					return p.FormatErrorAtToken(fmt.Sprintf("Path `%s` in imported file %s is not an object", strings.Join(path[:i+1], "."), importPath), errorLoc)
+				}
+				current = got
+			}
+		}
+
+		for k, v := range ic.constants {
+			for _, constant := range importConstants {
+				if k == constant {
+					p.GetConstants()[k] = v
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (p *Parser) Parse() (map[string]ParserValue, error) {
 	for {
 		token := p.Consume()
@@ -368,6 +435,45 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 				switch token.Value {
 				case "import":
 					{
+						nextUnknown := p.Peek()
+
+						importPaths := [][]string{}
+						importConstants := []string{}
+						importEverything := true
+
+						if nextUnknown.Type == tokeniser.TOKEN_TYPE_OPEN_OBJ {
+							p.Increment()
+							importEverything = false
+							for {
+								tok := p.Peek()
+
+								if tok.Type == tokeniser.TOKEN_TYPE_CLOSE_OBJ {
+									p.Increment()
+									break
+								}
+
+								if tok.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+									p.Increment()
+									importConstants = append(importConstants, tok.Value)
+								} else {
+									key, err := p.ParseDeepKey()
+									if err != nil {
+										return nil, err
+									}
+
+									importPaths = append(importPaths, key)
+								}
+
+								comma_or_close := p.Peek()
+
+								if comma_or_close.Type == tokeniser.TOKEN_TYPE_COMMA {
+									p.Increment()
+								} else if comma_or_close.Type != tokeniser.TOKEN_TYPE_CLOSE_OBJ {
+									return nil, p.FormatErrorAtToken("Expected comma or closing bracket", comma_or_close.Start)
+								}
+							}
+						}
+
 						importPath := p.Consume()
 
 						if importPath.Type != tokeniser.TOKEN_TYPE_STRING {
@@ -384,12 +490,9 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 						ic, icOk := (*p.importCache)[fullFilePath]
 
 						if icOk {
-							for k, v := range ic.values {
-								p.GetValues()[k] = v
-							}
-
-							for k, v := range ic.constants {
-								p.GetConstants()[k] = v
+							err := p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, importPath.Start, importPath.Value)
+							if err != nil {
+								return nil, err
 							}
 							continue
 						}
@@ -415,12 +518,13 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 						ic, icOk = (*p.importCache)[fullFilePath]
 
-						for k, v := range ic.values {
-							p.GetValues()[k] = v
+						if !icOk {
+							return nil, fmt.Errorf("Unreachable code reached, please report this as a bug")
 						}
 
-						for k, v := range ic.constants {
-							p.GetConstants()[k] = v
+						err = p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, importPath.Start, importPath.Value)
+						if err != nil {
+							return nil, err
 						}
 					}
 				default:

@@ -249,6 +249,20 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 				tokens = append(tokens, BoolToken(word, loc))
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))
+
+				for {
+					next := t.Peek()
+					if unicode.IsSpace(next) {
+						t.Increment()
+					} else {
+						break
+					}
+				}
+
+				if t.Peek() == '.' {
+					t.Increment()
+					tokens = append(tokens, DotToken(loc))
+				}
 			}
 		} else if IsAsciiDigit(c) || c == '-' || c == '.' {
 			number, error := t.ReadNumber()
@@ -295,8 +309,6 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 				tokens = append(tokens, CloseListToken(loc))
 			} else if c == ',' {
 				tokens = append(tokens, CommaToken(loc))
-			} else if c == ':' {
-				tokens = append(tokens, ColonToken(loc))
 			} else if c == '{' {
 				tokens = append(tokens, OpenObjToken(loc))
 			} else if c == '}' {
