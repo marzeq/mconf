@@ -97,7 +97,7 @@ Options:
 
 Examples:
   %s config.mconf property1 property2
-  cat config.mconf | %s - property1 property2`, progname, progname, progname, progname)
+  cat config.mconf | %s - property1 property2`, progname, progname, progname)
 }
 
 func parseOptions() (options, string) {
