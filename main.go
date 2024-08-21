@@ -56,7 +56,6 @@ func ParseFromStdin() (map[string]parser.ParserValue, error) {
 
 	s := string(b)
 
-	// get the current working directory
 	cwd, cwdErr := os.Getwd()
 	if cwdErr != nil {
 		return nil, cwdErr
@@ -87,11 +86,14 @@ type options struct {
 func usage(progname string) string {
 	return fmt.Sprintf(`Usage:
   %s <filename> [properties ...]
-  %s - [properties ...]
 
 Arguments:
   <filename>        Path to the configuration file. Use '-' to read from stdin.
   [properties ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed.
+
+Options:
+  -h, --help        Show this message
+  -v, --version     Show version
 
 Examples:
   %s config.mconf property1 property2
@@ -99,14 +101,32 @@ Examples:
 }
 
 func parseOptions() (options, string) {
+	opts := options{}
+
 	if len(os.Args) == 1 {
-		return options{}, usage(os.Args[0])
+		return opts, usage(os.Args[0])
 	}
 
-	return options{
-		Filename:          os.Args[1],
-		AcessedProperties: os.Args[2:],
-	}, ""
+	lastopt := 0
+
+	for i, arg := range os.Args[1:] {
+		if arg[0] == '-' && arg != "-" {
+			if arg == "-h" || arg == "--help" {
+				return opts, usage(os.Args[0])
+			} else if arg == "-v" || arg == "--version" {
+				return opts, "mconf (development version)"
+			} else {
+				return opts, fmt.Sprintf("Unknown option: %s", arg)
+			}
+		}
+
+		lastopt = i
+	}
+
+	opts.Filename = os.Args[lastopt+1]
+	opts.AcessedProperties = os.Args[(lastopt + 2):]
+
+	return opts, ""
 }
 
 func main() {
