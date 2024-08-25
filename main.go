@@ -107,9 +107,7 @@ func parseOptions() (options, string) {
 		return opts, usage(os.Args[0])
 	}
 
-	lastopt := 0
-
-	for i, arg := range os.Args[1:] {
+	for _, arg := range os.Args[1:] {
 		if arg[0] == '-' && arg != "-" {
 			if arg == "-h" || arg == "--help" {
 				return opts, usage(os.Args[0])
@@ -119,12 +117,10 @@ func parseOptions() (options, string) {
 				return opts, fmt.Sprintf("Unknown option: %s", arg)
 			}
 		}
-
-		lastopt = i
 	}
 
-	opts.Filename = os.Args[lastopt+1]
-	opts.AcessedProperties = os.Args[(lastopt + 2):]
+  opts.Filename = os.Args[1]
+  opts.AcessedProperties = os.Args[2:]
 
 	return opts, ""
 }
