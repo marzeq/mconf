@@ -35,6 +35,8 @@ key = "value"
 23abc = false # illegal, keys must start with a letter or underscore
 ```
 
+if a key is defined many times, the last one will shadow the previous ones
+
 ### string values
 
 ```mconf
@@ -52,7 +54,7 @@ unicode = "😊"
 an_int = 123
 # signed integer value
 a_uint = -123
-# float value (tokenised the same way but may be parsed as a different value depending on the implementation)
+# float value
 a_float = 123.456
 # fancy floats
 fancy_float = .5
@@ -101,7 +103,7 @@ commas in objects are optional, but you can use them if you want
 object = {
   foo = "bar",
   bar = 123,
-  baz = false
+  baz = false,
 }
 ```
 
@@ -130,11 +132,29 @@ bar = 123
 baz = 123
 ```
 
+if a value is defined many times, the last one will shadow the previous ones, just like if they were all defined at the top level
+
 ### constants
 
 ```mconf
 $some_constant = 123 
 abc = $some_constant
+```
+
+if a constant is redefined, the previous references will not be affected, but the following ones will be
+
+```mconf
+$a = 123
+foo = $a
+$a = 456
+bar = $a
+```
+
+will result in
+
+```mconf
+foo = 123
+bar = 456
 ```
 
 #### environment variables
@@ -187,14 +207,8 @@ a = 456
 - [x] merge current env vars with the constants
 - [x] allow for specifying what exactly to import from a file
 - [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
-
-## quirks of this particular parser
-
-### numbers
-
-- if a number does not contain either a `.` or a `-`, it will be parsed as a `uint64`, and if it overflows, it will be reset back to the max `uint64` value
-- if a number does not contain a `.` but contains a `-`, it will be parsed as a `int64`, and if it overflows or underflows, it will be reset back to the max `int64` value
-- otherwise, the number will be parsed as a float, and no bounds checking will be done
+- [ ] allow specyfing default values for enviorment variables if they are not set
+- [ ] hexadecimal and binary numbers
 
 ## license
 

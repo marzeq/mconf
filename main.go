@@ -119,8 +119,8 @@ func parseOptions() (options, string) {
 		}
 	}
 
-  opts.Filename = os.Args[1]
-  opts.AcessedProperties = os.Args[2:]
+	opts.Filename = os.Args[1]
+	opts.AcessedProperties = os.Args[2:]
 
 	return opts, ""
 }
@@ -130,7 +130,7 @@ func main() {
 
 	if usage != "" {
 		fmt.Println(usage)
-		return
+		os.Exit(1)
 	}
 
 	var m map[string]parser.ParserValue
@@ -157,21 +157,21 @@ func main() {
 
 		if indexedValue.GetType() != parser.PARSER_VALUE_TYPE_OBJECT && indexedValue.GetType() != parser.PARSER_VALUE_TYPE_LIST {
 			fmt.Printf("Property %s not found, indexed value is not an object or list\n", indexedString)
-			return
+			os.Exit(1)
 		}
 
 		if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_OBJECT {
 			obj, err := indexedValue.GetObject()
 			if err != nil {
 				fmt.Printf("Unexpected error, indexed value has type object but cannot be converted to object, please report this bug\n")
-				return
+				os.Exit(1)
 			}
 
 			next := obj[p]
 
 			if next == nil {
 				fmt.Printf("Property %s not found\n", indexedString)
-				return
+				os.Exit(1)
 			}
 
 			indexedValue = next
@@ -179,18 +179,18 @@ func main() {
 			list, err := indexedValue.GetList()
 			if err != nil {
 				fmt.Printf("Unexpected error, indexed value has type list but cannot be converted to list, please report this bug\n")
-				return
+				os.Exit(1)
 			}
 
 			index, err := strconv.Atoi(p)
 			if err != nil {
 				fmt.Printf("Property %s not found, index is not an integer\n", indexedString)
-				return
+				os.Exit(1)
 			}
 
 			if index < 0 || index >= len(list) {
 				fmt.Printf("Property %s not found, index out of bounds\n", indexedString)
-				return
+				os.Exit(1)
 			}
 
 			indexedValue = list[index]
@@ -202,7 +202,7 @@ func main() {
 
 		if !ok {
 			fmt.Printf("Unexpected error, indexed value has type string but cannot be cast to string, please report this bug\n")
-			return
+			os.Exit(1)
 		}
 
 		fmt.Println(cast.Value)

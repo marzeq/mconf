@@ -1,12 +1,10 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
-	"math"
+	"math/big"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/marzeq/mconf/tokeniser"
@@ -28,9 +26,8 @@ type ParserValue interface {
 	ValueToString(indentAndDepth ...int) string
 
 	GetString() (string, error)
-	GetFloat() (float64, error)
-	GetInt() (int64, error)
-	GetUInt() (uint64, error)
+	GetFloat() (*big.Float, error)
+	GetInt() (*big.Int, error)
 	GetBool() (bool, error)
 	GetList() ([]ParserValue, error)
 	GetObject() (map[string]ParserValue, error)
@@ -172,34 +169,19 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 		return &ParserValueString{Value: token.Value}, nil
 	case tokeniser.TOKEN_TYPE_NUMBER:
 		if strings.Contains(token.Value, ".") {
-			converted, err := strconv.ParseFloat(token.Value, 0)
+			bigFl, _, err := big.ParseFloat(token.Value, 10, 0, big.ToNearestEven)
 			if err != nil {
-				return nil, errors.Join(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to number", token.Value), token.Start), err)
+				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to float", token.Value), token.Start)
 			}
 
-			return &ParserValueFloat{Value: converted}, nil
-		} else if strings.Contains(token.Value, "-") {
-			converted, err := strconv.ParseInt(token.Value, 10, 0)
-			if err != nil {
-				if err.(*strconv.NumError).Err == strconv.ErrRange {
-					converted = math.MaxInt64
-				} else {
-					return nil, errors.Join(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to number", token.Value), token.Start), err)
-				}
-			}
-
-			return &ParserValueInt{Value: converted}, nil
+			return &ParserValueFloat{Value: bigFl}, nil
 		} else {
-			converted, err := strconv.ParseUint(token.Value, 10, 0)
-			if err != nil {
-				if err.(*strconv.NumError).Err == strconv.ErrRange {
-					converted = math.MaxUint64
-				} else {
-					return nil, errors.Join(p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to number", token.Value), token.Start), err)
-				}
+			intVal, success := new(big.Int).SetString(token.Value, 10)
+			if !success {
+				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to int", token.Value), token.Start)
 			}
 
-			return &ParserValueUInt{Value: converted}, nil
+			return &ParserValueInt{Value: intVal}, nil
 		}
 	case tokeniser.TOKEN_TYPE_BOOL:
 		var converted bool
