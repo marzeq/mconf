@@ -218,6 +218,7 @@ a = 456
 - [x] allow for specifying what exactly to import from a file
 - [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
 - [x] allow specyfing default values for constants/env vars if they are not set
+  * [ ] staight values as fallbacks instead of having to define a constant before using it as a fallback value
 - [ ] hexadecimal and binary numbers
 
 ## license
