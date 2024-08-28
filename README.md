@@ -24,6 +24,7 @@ note that mconf fully suppports unicode, so a letter means any unicode latin let
 
 ```mconf
 # this is a comment
+a = 1 # this is a comment as well
 ```
 
 ### keys
@@ -165,6 +166,15 @@ enviorment variables are automatically loaded as any other constant
 user = $USER
 ```
 
+#### default values
+
+if a constant is not defined, you can put a `?` after it and then another constant that will be used as the default value
+
+```mconf
+$default_user = "some_user"
+user = $USER?$default_user
+```
+
 ### import
 
 files can import other files, and the imported file will be parsed and merged with the current file (constants are shared between the files as well)
@@ -207,7 +217,7 @@ a = 456
 - [x] merge current env vars with the constants
 - [x] allow for specifying what exactly to import from a file
 - [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
-- [ ] allow specyfing default values for enviorment variables if they are not set
+- [x] allow specyfing default values for constants/env vars if they are not set
 - [ ] hexadecimal and binary numbers
 
 ## license

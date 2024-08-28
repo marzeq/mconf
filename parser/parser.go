@@ -198,6 +198,28 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 	case tokeniser.TOKEN_TYPE_CONSTANT:
 		value, ok := p.GetConstants()[token.Value]
 
+		peeked := p.Peek()
+
+		backup := ""
+
+		if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
+			p.Increment()
+
+			b := p.Consume()
+
+			if b.Type != tokeniser.TOKEN_TYPE_CONSTANT {
+				return nil, p.FormatErrorAtToken("Expected constant after `?`", b.Start)
+			}
+
+			backup = b.Value
+		}
+
+		if !ok {
+			if backup != "" {
+				value, ok = p.GetConstants()[backup]
+			}
+		}
+
 		if !ok {
 			return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
 		}

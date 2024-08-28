@@ -5,19 +5,20 @@ import (
 )
 
 const (
-	TOKEN_TYPE_KEY        = "KEY"
-	TOKEN_TYPE_CONSTANT   = "CONSTANT"
-	TOKEN_TYPE_ASSIGN     = "ASSIGN"
-	TOKEN_TYPE_NUMBER     = "NUMBER"
-	TOKEN_TYPE_STRING     = "STRING"
-	TOKEN_TYPE_BOOL       = "BOOL"
-	TOKEN_TYPE_OPEN_LIST  = "OPEN_LIST"
-	TOKEN_TYPE_CLOSE_LIST = "CLOSE_LIST"
-	TOKEN_TYPE_COMMA      = "COMMA"
-	TOKEN_TYPE_DOT        = "DOT"
-	TOKEN_TYPE_OPEN_OBJ   = "OPEN_OBJ"
-	TOKEN_TYPE_CLOSE_OBJ  = "CLOSE_OBJ"
-	TOKEN_TYPE_DIRECTIVE  = "DIRECTIVE"
+	TOKEN_TYPE_KEY           = "KEY"
+	TOKEN_TYPE_CONSTANT      = "CONSTANT"
+	TOKEN_TYPE_ASSIGN        = "ASSIGN"
+	TOKEN_TYPE_NUMBER        = "NUMBER"
+	TOKEN_TYPE_STRING        = "STRING"
+	TOKEN_TYPE_BOOL          = "BOOL"
+	TOKEN_TYPE_OPEN_LIST     = "OPEN_LIST"
+	TOKEN_TYPE_CLOSE_LIST    = "CLOSE_LIST"
+	TOKEN_TYPE_COMMA         = "COMMA"
+	TOKEN_TYPE_DOT           = "DOT"
+	TOKEN_TYPE_QUESTION_MARK = "QUESTION_MARK"
+	TOKEN_TYPE_OPEN_OBJ      = "OPEN_OBJ"
+	TOKEN_TYPE_CLOSE_OBJ     = "CLOSE_OBJ"
+	TOKEN_TYPE_DIRECTIVE     = "DIRECTIVE"
 
 	TOKEN_TYPE_EOF = "EOF"
 )
@@ -130,6 +131,14 @@ func CommaToken(start Location) Token {
 func DotToken(start Location) Token {
 	return Token{
 		Type:  TOKEN_TYPE_DOT,
+		Value: NO_VALUE,
+		Start: start,
+	}
+}
+
+func QuestionMarkToken(start Location) Token {
+	return Token{
+		Type:  TOKEN_TYPE_QUESTION_MARK,
 		Value: NO_VALUE,
 		Start: start,
 	}

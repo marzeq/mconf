@@ -307,6 +307,8 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 				tokens = append(tokens, OpenListToken(loc))
 			} else if c == ']' {
 				tokens = append(tokens, CloseListToken(loc))
+			} else if c == '?' {
+				tokens = append(tokens, QuestionMarkToken(loc))
 			} else if c == ',' {
 				tokens = append(tokens, CommaToken(loc))
 			} else if c == '{' {
