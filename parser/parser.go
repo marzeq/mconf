@@ -264,6 +264,8 @@ func (p *Parser) ParseList() ([]ParserValue, error) {
 			fallthrough
 		case tokeniser.TOKEN_TYPE_OPEN_LIST:
 			fallthrough
+		case tokeniser.TOKEN_TYPE_OPEN_OBJ:
+			fallthrough
 		case tokeniser.TOKEN_TYPE_CONSTANT:
 			{
 				value, err := p.ParseValue()
