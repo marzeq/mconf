@@ -136,7 +136,7 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) erro
 		return fmt.Errorf(fmt.Sprintf("%s - Parser error at EOF: %s", prettyFile, message))
 	}
 
-	return fmt.Errorf(fmt.Sprintf("%s - Parser error at line %d, col %d: %s", prettyFile, loc.Line, loc.Col, message))
+	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Parser error: %s", prettyFile, loc.Line, loc.Col, message))
 }
 
 func (p *Parser) ParseDeepKey() ([]string, error) {

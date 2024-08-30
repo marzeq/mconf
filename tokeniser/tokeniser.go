@@ -190,7 +190,7 @@ func (t *Tokeniser) GetCurrLineAndCol() Location {
 }
 
 func (t *Tokeniser) FormatErrorAt(message string, loc Location) error {
-	return fmt.Errorf(fmt.Sprintf("%s - Tokeniser error at line %d, col %d: %s", t.filePath, loc.Line, loc.Col, message))
+	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Tokeniser error: %s", t.filePath, loc.Line, loc.Col, message))
 }
 
 func (t *Tokeniser) FormatError(message string) error {
