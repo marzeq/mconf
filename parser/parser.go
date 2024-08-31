@@ -166,7 +166,31 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 
 	switch token.Type {
 	case tokeniser.TOKEN_TYPE_STRING:
-		return &ParserValueString{Value: token.Value}, nil
+		sb := ""
+		for i, v := range token.Values {
+			sb += v
+
+			if i < len(token.StringSubs) {
+				constantName := token.StringSubs[i]
+				constantValue, ok := p.GetConstants()[constantName]
+				if !ok {
+					return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant in string substitution `%s` not found", constantName), token.Start)
+				}
+
+				if constantValue.GetType() != PARSER_VALUE_TYPE_STRING {
+					sb += constantValue.ValueToString()
+				} else {
+					constantStr, err := constantValue.GetString()
+					if err != nil {
+						return nil, err
+					}
+
+					sb += constantStr
+				}
+			}
+		}
+
+		return &ParserValueString{Value: sb}, nil
 	case tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
 		if strings.Contains(token.Value, ".") {
 			bigFl, _, err := big.ParseFloat(token.Value, 10, 0, big.ToNearestEven)

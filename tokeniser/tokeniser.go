@@ -47,18 +47,44 @@ func (t *Tokeniser) GoBack() {
 	t.currIndex--
 }
 
-func (t *Tokeniser) ReadString() (string, error) {
-	s := ""
+func (t *Tokeniser) ReadString() ([]string, []string, error) {
+	strings := []string{""}
 
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
+	constantSubs := []string{}
+
 	if initial != '"' {
-		return "", t.FormatErrorAt("Expected `\"` to start string", loc)
+		return nil, nil, t.FormatErrorAt("Expected `\"` to start string", loc)
 	}
 
 	for {
 		c := t.Consume()
+
+		if c == '$' {
+			openbrack := t.Consume()
+
+			if openbrack != '{' {
+				return nil, nil, t.FormatErrorAt("Expected `{` after `$` in formatted string", loc)
+			}
+
+			constantName, error := t.ReadWord()
+
+			if error != nil {
+				return nil, nil, error
+			}
+
+			closebrack := t.Consume()
+
+			if closebrack != '}' {
+				return nil, nil, t.FormatErrorAt("Expected `}` after constant name in formatted string", loc)
+			}
+
+			constantSubs = append(constantSubs, constantName)
+			strings = append(strings, "")
+			continue
+		}
 
 		if c == '\\' {
 			nextloc := t.GetCurrLineAndCol()
@@ -66,30 +92,32 @@ func (t *Tokeniser) ReadString() (string, error) {
 
 			switch next {
 			case '"':
-				s += "\""
+				strings[len(strings)-1] += "\""
 			case '\'':
-				s += "'"
+				strings[len(strings)-1] += "'"
 			case '\\':
-				s += "\\"
+				strings[len(strings)-1] += "\\"
 			case 'n':
-				s += "\n"
+				strings[len(strings)-1] += "\n"
 			case 'r':
-				s += "\r"
+				strings[len(strings)-1] += "\r"
 			case 't':
-				s += "\t"
+				strings[len(strings)-1] += "\t"
 			case 'f':
-				s += "\f"
+				strings[len(strings)-1] += "\f"
+			case '$':
+				strings[len(strings)-1] += "$"
 			default:
-				return "", t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc)
+				return nil, nil, t.FormatErrorAt(fmt.Sprintf("Unknown escape sequence: `\\%c`", next), nextloc)
 			}
 		} else if c == initial {
 			break
 		} else {
-			s += string(c)
+			strings[len(strings)-1] += string(c)
 		}
 	}
 
-	return s, nil
+	return strings, constantSubs, nil
 }
 
 func (t *Tokeniser) ReadWord() (string, error) {
@@ -315,13 +343,13 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 
 			tokens = append(tokens, NumberToken(number, mode, loc))
 		} else if c == '"' {
-			parsed, error := t.ReadString()
+			parsed, constantSubs, error := t.ReadString()
 
 			if error != nil {
 				return nil, error
 			}
 
-			tokens = append(tokens, StringToken(parsed, loc))
+			tokens = append(tokens, StringToken(parsed, constantSubs, loc))
 		} else if c == '#' {
 			t.IgnoreComment()
 		} else {

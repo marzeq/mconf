@@ -39,9 +39,11 @@ func (l Location) Repr() string {
 }
 
 type Token struct {
-	Type  string
-	Value string
-	Start Location
+	Type       string
+	Value      string
+	Values     []string
+	StringSubs []string
+	Start      Location
 }
 
 func (t Token) Repr() string {
@@ -111,11 +113,12 @@ func NumberToken(value string, numtype string, start Location) Token {
 	}
 }
 
-func StringToken(value string, start Location) Token {
+func StringToken(values []string, stringsubs []string, start Location) Token {
 	return Token{
-		Type:  TOKEN_TYPE_STRING,
-		Value: value,
-		Start: start,
+		Type:       TOKEN_TYPE_STRING,
+		Values:     values,
+		StringSubs: stringsubs,
+		Start:      start,
 	}
 }
 

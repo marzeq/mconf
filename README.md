@@ -48,6 +48,16 @@ escapes = "\"escaped quotes\""
 unicode = "😊"
 ```
 
+#### formatted strings
+
+```mconf
+user_and_port = "${USER}:${PORT}"
+```
+
+keep in mind, the {} **are required**
+
+if the value substituted is not a string, it will be converted to one
+
 ### numerical values
 
 ```mconf
@@ -218,7 +228,7 @@ a = 456
 
 ## todo:
 
-- [ ] support for formatted strings that allow for inserting constants into the string like `foo = f"bar ${baz}"` (where baz is a previously defined constant)
+- [x] support for formatted strings
 - [x] merge current env vars with the constants
 - [x] allow for specifying what exactly to import from a file
 - [x] allow specyfing default values for constants/env vars if they are not set
