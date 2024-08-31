@@ -233,6 +233,7 @@ a = 456
 - [x] allow for specifying what exactly to import from a file
 - [x] allow specyfing default values for constants/env vars if they are not set
 - [x] hexadecimal and binary numbers
+- [ ] add a --to-json flag to convert mconf to json
 
 ## license
 
