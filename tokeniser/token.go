@@ -5,20 +5,22 @@ import (
 )
 
 const (
-	TOKEN_TYPE_KEY           = "KEY"
-	TOKEN_TYPE_CONSTANT      = "CONSTANT"
-	TOKEN_TYPE_ASSIGN        = "ASSIGN"
-	TOKEN_TYPE_NUMBER        = "NUMBER"
-	TOKEN_TYPE_STRING        = "STRING"
-	TOKEN_TYPE_BOOL          = "BOOL"
-	TOKEN_TYPE_OPEN_LIST     = "OPEN_LIST"
-	TOKEN_TYPE_CLOSE_LIST    = "CLOSE_LIST"
-	TOKEN_TYPE_COMMA         = "COMMA"
-	TOKEN_TYPE_DOT           = "DOT"
-	TOKEN_TYPE_QUESTION_MARK = "QUESTION_MARK"
-	TOKEN_TYPE_OPEN_OBJ      = "OPEN_OBJ"
-	TOKEN_TYPE_CLOSE_OBJ     = "CLOSE_OBJ"
-	TOKEN_TYPE_DIRECTIVE     = "DIRECTIVE"
+	TOKEN_TYPE_KEY            = "KEY"
+	TOKEN_TYPE_CONSTANT       = "CONSTANT"
+	TOKEN_TYPE_ASSIGN         = "ASSIGN"
+	TOKEN_TYPE_NUMBER_DECIMAL = "NUMBER_DECIMAL"
+	TOKEN_TYPE_NUMBER_HEX     = "NUMBER_HEX"
+	TOKEN_TYPE_NUMBER_BINARY  = "NUMBER_BINARY"
+	TOKEN_TYPE_STRING         = "STRING"
+	TOKEN_TYPE_BOOL           = "BOOL"
+	TOKEN_TYPE_OPEN_LIST      = "OPEN_LIST"
+	TOKEN_TYPE_CLOSE_LIST     = "CLOSE_LIST"
+	TOKEN_TYPE_COMMA          = "COMMA"
+	TOKEN_TYPE_DOT            = "DOT"
+	TOKEN_TYPE_QUESTION_MARK  = "QUESTION_MARK"
+	TOKEN_TYPE_OPEN_OBJ       = "OPEN_OBJ"
+	TOKEN_TYPE_CLOSE_OBJ      = "CLOSE_OBJ"
+	TOKEN_TYPE_DIRECTIVE      = "DIRECTIVE"
 
 	TOKEN_TYPE_EOF = "EOF"
 )
@@ -80,11 +82,32 @@ func AssignToken(start Location) Token {
 	}
 }
 
-func NumberToken(value string, start Location) Token {
-	return Token{
-		Type:  TOKEN_TYPE_NUMBER,
-		Value: value,
-		Start: start,
+func NumberToken(value string, numtype string, start Location) Token {
+	switch numtype {
+	case TOKEN_TYPE_NUMBER_DECIMAL:
+		return Token{
+			Type:  TOKEN_TYPE_NUMBER_DECIMAL,
+			Value: value,
+			Start: start,
+		}
+	case TOKEN_TYPE_NUMBER_HEX:
+		return Token{
+			Type:  TOKEN_TYPE_NUMBER_HEX,
+			Value: value,
+			Start: start,
+		}
+	case TOKEN_TYPE_NUMBER_BINARY:
+		return Token{
+			Type:  TOKEN_TYPE_NUMBER_BINARY,
+			Value: value,
+			Start: start,
+		}
+	default:
+		return Token{
+			Type:  TOKEN_TYPE_NUMBER_DECIMAL,
+			Value: value,
+			Start: start,
+		}
 	}
 }
 

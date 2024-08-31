@@ -167,7 +167,7 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 	switch token.Type {
 	case tokeniser.TOKEN_TYPE_STRING:
 		return &ParserValueString{Value: token.Value}, nil
-	case tokeniser.TOKEN_TYPE_NUMBER:
+	case tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
 		if strings.Contains(token.Value, ".") {
 			bigFl, _, err := big.ParseFloat(token.Value, 10, 0, big.ToNearestEven)
 			if err != nil {
@@ -178,11 +178,25 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 		} else {
 			intVal, success := new(big.Int).SetString(token.Value, 10)
 			if !success {
-				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to int", token.Value), token.Start)
+				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to decimal int", token.Value), token.Start)
 			}
 
 			return &ParserValueInt{Value: intVal}, nil
 		}
+	case tokeniser.TOKEN_TYPE_NUMBER_HEX:
+		intVal, success := new(big.Int).SetString(token.Value, 16)
+		if !success {
+			return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to hex int", token.Value), token.Start)
+		}
+
+		return &ParserValueInt{Value: intVal}, nil
+	case tokeniser.TOKEN_TYPE_NUMBER_BINARY:
+		intVal, success := new(big.Int).SetString(token.Value, 2)
+		if !success {
+			return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to binary int", token.Value), token.Start)
+		}
+
+		return &ParserValueInt{Value: intVal}, nil
 	case tokeniser.TOKEN_TYPE_BOOL:
 		var converted bool
 
@@ -258,7 +272,11 @@ func (p *Parser) ParseList() ([]ParserValue, error) {
 			return list, nil
 		case tokeniser.TOKEN_TYPE_STRING:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_NUMBER:
+		case tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
+			fallthrough
+		case tokeniser.TOKEN_TYPE_NUMBER_HEX:
+			fallthrough
+		case tokeniser.TOKEN_TYPE_NUMBER_BINARY:
 			fallthrough
 		case tokeniser.TOKEN_TYPE_BOOL:
 			fallthrough

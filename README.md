@@ -59,6 +59,11 @@ a_uint = -123
 a_float = 123.456
 # fancy floats
 fancy_float = .5
+
+# hexadecimal value
+hex = 0x123
+# binary value
+bin = 0b1010
 ```
 
 ### boolean values
@@ -216,10 +221,8 @@ a = 456
 - [ ] support for formatted strings that allow for inserting constants into the string like `foo = f"bar ${baz}"` (where baz is a previously defined constant)
 - [x] merge current env vars with the constants
 - [x] allow for specifying what exactly to import from a file
-- [ ] a `@template` directive that allows for defining a template that can be used in the file, like `@template !my_template(foo) { foo = $foo }` and then calling it like `foo = !my_template(123)`
 - [x] allow specyfing default values for constants/env vars if they are not set
-  * [ ] staight values as fallbacks instead of having to define a constant before using it as a fallback value
-- [ ] hexadecimal and binary numbers
+- [x] hexadecimal and binary numbers
 
 ## license
 
