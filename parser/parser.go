@@ -161,33 +161,42 @@ func (p *Parser) ParseDeepKey() ([]string, error) {
 	return key, nil
 }
 
+func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
+	sb := ""
+	for i, v := range token.Values {
+		sb += v
+
+		if i < len(token.StringSubs) {
+			constantName := token.StringSubs[i]
+			constantValue, ok := p.GetConstants()[constantName]
+			if !ok {
+				return "", p.FormatErrorAtToken(fmt.Sprintf("Constant in string substitution `%s` not found", constantName), token.Start)
+			}
+
+			if constantValue.GetType() != PARSER_VALUE_TYPE_STRING {
+				sb += constantValue.ValueToString()
+			} else {
+				constantStr, err := constantValue.GetString()
+				if err != nil {
+					return "", err
+				}
+
+				sb += constantStr
+			}
+		}
+	}
+
+	return sb, nil
+}
+
 func (p *Parser) ParseValue() (ParserValue, error) {
 	token := p.Consume()
 
 	switch token.Type {
 	case tokeniser.TOKEN_TYPE_STRING:
-		sb := ""
-		for i, v := range token.Values {
-			sb += v
-
-			if i < len(token.StringSubs) {
-				constantName := token.StringSubs[i]
-				constantValue, ok := p.GetConstants()[constantName]
-				if !ok {
-					return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant in string substitution `%s` not found", constantName), token.Start)
-				}
-
-				if constantValue.GetType() != PARSER_VALUE_TYPE_STRING {
-					sb += constantValue.ValueToString()
-				} else {
-					constantStr, err := constantValue.GetString()
-					if err != nil {
-						return nil, err
-					}
-
-					sb += constantStr
-				}
-			}
+		sb, err := p.EvaluateStringValue(token)
+		if err != nil {
+			return nil, err
 		}
 
 		return &ParserValueString{Value: sb}, nil
@@ -435,7 +444,18 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 			fallthrough
 		case tokeniser.TOKEN_TYPE_STRING:
 			{
-				key := token.Value
+				var key string
+
+				if token.Type == tokeniser.TOKEN_TYPE_KEY {
+					key = token.Value
+				} else {
+					evkey, err := p.EvaluateStringValue(token)
+					if err != nil {
+						return nil, err
+					}
+
+					key = evkey
+				}
 
 				assign := p.Consume()
 
