@@ -16,6 +16,10 @@ func (v *ParserValueFloat) ValueToString(indentAndDepth ...int) string {
 	return v.Value.String()
 }
 
+func (v *ParserValueFloat) ToJSONString() string {
+	return v.Value.String()
+}
+
 func (v *ParserValueFloat) GetFloat() (*big.Float, error) {
 	return v.Value, nil
 }

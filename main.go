@@ -81,6 +81,7 @@ func readStdin() ([]byte, error) {
 type options struct {
 	Filename          string
 	AcessedProperties []string
+	ToJson            bool
 }
 
 func usage(progname string) string {
@@ -94,33 +95,58 @@ Arguments:
 Options:
   -h, --help        Show this message
   -v, --version     Show version
+  -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
 
 Examples:
   %s config.mconf property1 property2
   cat config.mconf | %s - property1 property2`, progname, progname, progname)
 }
 
+func version() string {
+	return "mconf (development version)"
+}
+
 func parseOptions() (options, string) {
 	opts := options{}
+	opts.ToJson = false
 
 	if len(os.Args) == 1 {
 		return opts, usage(os.Args[0])
 	}
 
+	shitfby := 0
+
 	for _, arg := range os.Args[1:] {
 		if arg[0] == '-' && arg != "-" {
-			if arg == "-h" || arg == "--help" {
-				return opts, usage(os.Args[0])
-			} else if arg == "-v" || arg == "--version" {
-				return opts, "mconf (development version)"
+			if arg[1] == '-' {
+				if arg == "--help" {
+					return opts, usage(os.Args[0])
+				} else if arg == "--version" {
+					return opts, version()
+				} else if arg == "--json" {
+					opts.ToJson = true
+				}
+				// for now, ignore unknown options
+				// i think thaths the right approach
+				// else {}
 			} else {
-				return opts, fmt.Sprintf("Unknown option: %s", arg)
+				for _, c := range arg[1:] {
+					if c == 'h' {
+						return opts, usage(os.Args[0])
+					} else if c == 'v' {
+						return opts, version()
+					} else if c == 'j' {
+						opts.ToJson = true
+					}
+				}
 			}
+
+			shitfby++
 		}
 	}
 
-	opts.Filename = os.Args[1]
-	opts.AcessedProperties = os.Args[2:]
+	opts.Filename = os.Args[1+shitfby]
+	opts.AcessedProperties = os.Args[2+shitfby:]
 
 	return opts, ""
 }
@@ -195,6 +221,11 @@ func main() {
 
 			indexedValue = list[index]
 		}
+	}
+
+	if opts.ToJson {
+		fmt.Println(indexedValue.ToJSONString())
+		return
 	}
 
 	if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_STRING {

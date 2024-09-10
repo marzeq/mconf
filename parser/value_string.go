@@ -23,6 +23,10 @@ func (v *ParserValueString) ValueToString(indentAndDepth ...int) string {
 	return "\"" + replaced + "\""
 }
 
+func (v *ParserValueString) ToJSONString() string {
+	return v.ValueToString()
+}
+
 func (v *ParserValueString) GetString() (string, error) {
 	return v.Value, nil
 }

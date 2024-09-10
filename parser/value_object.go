@@ -44,6 +44,34 @@ func (v *ParserValueObject) OneLineStringValue() string {
 	return s
 }
 
+func (v *ParserValueObject) ToJSONString() string {
+	if len(v.Value) == 0 {
+		return "{}"
+	}
+
+	s := "{"
+
+	keycount := 0
+
+	for k, val := range v.Value {
+		if !tokeniser.IsLegalWord([]rune(k)) {
+			k = fmt.Sprintf("\"%s\"", k)
+		}
+
+		s += fmt.Sprintf("\"%s\":%s", k, val.ToJSONString())
+
+		if keycount < len(v.Value)-1 {
+			s += ","
+		}
+
+		keycount++
+	}
+
+	s += "}"
+
+	return s
+}
+
 func (v *ParserValueObject) ValueToString(indentAndDepth ...int) string {
 	var indentSize int
 	var depth int

@@ -16,6 +16,10 @@ func (v *ParserValueInt) ValueToString(indentAndDepth ...int) string {
 	return v.Value.String()
 }
 
+func (v *ParserValueInt) ToJSONString() string {
+	return v.Value.String()
+}
+
 func (v *ParserValueInt) GetInt() (*big.Int, error) {
 	return v.Value, nil
 }

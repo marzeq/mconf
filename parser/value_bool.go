@@ -17,6 +17,10 @@ func (v *ParserValueBool) ValueToString(indentAndDepth ...int) string {
 	return strconv.FormatBool(v.Value)
 }
 
+func (v *ParserValueBool) ToJSONString() string {
+	return v.ValueToString()
+}
+
 func (v *ParserValueBool) GetBool() (bool, error) {
 	return v.Value, nil
 }

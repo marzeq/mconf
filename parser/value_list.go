@@ -34,6 +34,26 @@ func (v *ParserValueList) OneLineStringValue() string {
 	return s
 }
 
+func (v *ParserValueList) ToJSONString() string {
+	if len(v.Value) == 0 {
+		return "[]"
+	}
+
+	s := "["
+
+	for i, val := range v.Value {
+		s += val.ToJSONString()
+
+		if i < len(v.Value)-1 {
+			s += ","
+		}
+	}
+
+	s += "]"
+
+	return s
+}
+
 func (v *ParserValueList) ValueToString(indentAndDepth ...int) string {
 	var indentSize int
 	var depth int

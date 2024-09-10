@@ -16,6 +16,26 @@ just build-all # builds the project for every combination of: windows, darwin (m
 
 if you don't want to use just, you can always use the go build and go run commands directly
 
+## command line usage
+
+```
+Usage:
+  mconf <filename> [properties ...]
+
+Arguments:
+  <filename>        Path to the configuration file. Use '-' to read from stdin.
+  [properties ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed.
+
+Options:
+  -h, --help        Show this message
+  -v, --version     Show version
+  -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
+
+Examples:
+  mconf config.mconf property1 property2
+  cat config.mconf | mconf - property1 property
+```
+
 ## spec
 
 note that mconf fully suppports unicode, so a letter means any unicode latin letter and not just ascii letters, and string values can contain any unicode character
@@ -233,7 +253,7 @@ a = 456
 - [x] allow for specifying what exactly to import from a file
 - [x] allow specyfing default values for constants/env vars if they are not set
 - [x] hexadecimal and binary numbers
-- [ ] add a --to-json flag to convert mconf to json
+- [x] add a --json flag to convert mconf to json
 
 ## license
 

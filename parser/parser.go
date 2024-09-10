@@ -24,6 +24,7 @@ type ParserValue interface {
 	GetType() string
 
 	ValueToString(indentAndDepth ...int) string
+	ToJSONString() string
 
 	GetString() (string, error)
 	GetFloat() (*big.Float, error)
