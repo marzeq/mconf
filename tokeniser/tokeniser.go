@@ -47,6 +47,10 @@ func (t *Tokeniser) GoBack() {
 	t.currIndex--
 }
 
+func IsHexDigit(c rune) bool {
+	return IsAsciiDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+}
+
 func (t *Tokeniser) ReadString() ([]string, []string, error) {
 	strings := []string{""}
 
@@ -97,14 +101,64 @@ func (t *Tokeniser) ReadString() ([]string, []string, error) {
 				strings[len(strings)-1] += "'"
 			case '\\':
 				strings[len(strings)-1] += "\\"
-			case 'n':
-				strings[len(strings)-1] += "\n"
-			case 'r':
-				strings[len(strings)-1] += "\r"
+			// source https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#general-ascii-codes
+			case 'a':
+				strings[len(strings)-1] += "\a"
+			case 'b':
+				strings[len(strings)-1] += "\b"
 			case 't':
 				strings[len(strings)-1] += "\t"
+			case 'n':
+				strings[len(strings)-1] += "\n"
+			case 'v':
+				strings[len(strings)-1] += "\v"
 			case 'f':
 				strings[len(strings)-1] += "\f"
+			case 'r':
+				strings[len(strings)-1] += "\r"
+			case 'e':
+				strings[len(strings)-1] += "\x1b"
+			// end source
+			case 'x':
+				// read two hex digits (one byte)
+				hc1 := t.Consume()
+				if !IsHexDigit(hc1) {
+					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\x`, got `%c`", hc1), nextloc)
+				}
+				h1 := hc1 - '0'
+				hc2 := t.Consume()
+				if !IsHexDigit(hc2) {
+					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\x%c`, got `%c`", hc1, hc2), nextloc)
+				}
+				h2 := hc2 - '0'
+				ch := h1*16 + h2
+				strings[len(strings)-1] += string(ch)
+			case 'u':
+				fallthrough
+			case 'U':
+				// read four hex digits (two bytes aka one unicode code point)
+				hc1 := t.Consume()
+				if !IsHexDigit(hc1) {
+					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u`, got `%c`", hc1), nextloc)
+				}
+				h1 := hc1 - '0'
+				hc2 := t.Consume()
+				if !IsHexDigit(hc2) {
+					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c`, got `%c`", hc1, hc2), nextloc)
+				}
+				h2 := hc2 - '0'
+				hc3 := t.Consume()
+				if !IsHexDigit(hc3) {
+					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c%c`, got `%c`", hc1, hc2, hc3), nextloc)
+				}
+				h3 := hc3 - '0'
+				hc4 := t.Consume()
+				if !IsHexDigit(hc4) {
+					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c%c%c`, got `%c`", hc1, hc2, hc3, hc4), nextloc)
+				}
+				h4 := hc4 - '0'
+				ch := h1*16*16*16 + h2*16*16 + h3*16 + h4
+				strings[len(strings)-1] += string(ch)
 			case '$':
 				strings[len(strings)-1] += "$"
 			default:

@@ -16,6 +16,32 @@ func (v *ParserValueObject) GetType() string {
 	return PARSER_VALUE_TYPE_OBJECT
 }
 
+func applyEscapes(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "\"", "\\\"")
+	s = strings.ReplaceAll(s, "\a", "\\a")
+	s = strings.ReplaceAll(s, "\b", "\\b")
+	s = strings.ReplaceAll(s, "\t", "\\t")
+	s = strings.ReplaceAll(s, "\n", "\\n")
+	s = strings.ReplaceAll(s, "\v", "\\v")
+	s = strings.ReplaceAll(s, "\f", "\\f")
+	s = strings.ReplaceAll(s, "\r", "\\r")
+
+	return s
+}
+
+func prepareKey(s string, inJson ...bool) string {
+	if s == "" {
+		return "\"\""
+	}
+
+	if len(inJson) > 0 && inJson[0] || !tokeniser.IsLegalWord([]rune(s)) {
+		return fmt.Sprintf("\"%s\"", applyEscapes(s))
+	} else {
+		return s
+	}
+}
+
 func (v *ParserValueObject) OneLineStringValue() string {
 	if len(v.Value) == 0 {
 		return "{}"
@@ -26,11 +52,7 @@ func (v *ParserValueObject) OneLineStringValue() string {
 	keycount := 0
 
 	for k, val := range v.Value {
-		if !tokeniser.IsLegalWord([]rune(k)) {
-			k = fmt.Sprintf("\"%s\"", k)
-		}
-
-		s += fmt.Sprintf("%s = %s", k, val.ValueToString())
+		s += fmt.Sprintf("%s = %s", prepareKey(k), val.ValueToString())
 
 		if keycount < len(v.Value)-1 {
 			s += ", "
@@ -54,11 +76,7 @@ func (v *ParserValueObject) ToJSONString() string {
 	keycount := 0
 
 	for k, val := range v.Value {
-		if !tokeniser.IsLegalWord([]rune(k)) {
-			k = fmt.Sprintf("\"%s\"", k)
-		}
-
-		s += fmt.Sprintf("\"%s\":%s", k, val.ToJSONString())
+		s += fmt.Sprintf("%s:%s", prepareKey(k, true), val.ToJSONString())
 
 		if keycount < len(v.Value)-1 {
 			s += ","
@@ -104,11 +122,7 @@ func (v *ParserValueObject) ValueToString(indentAndDepth ...int) string {
 	currindent := strings.Repeat(indent, depth)
 
 	for k, val := range v.Value {
-		if !tokeniser.IsLegalWord([]rune(k)) {
-			k = fmt.Sprintf("\"%s\"", k)
-		}
-
-		s += fmt.Sprintf("%s%s = %s\n", currindent, k, val.ValueToString(indentSize, depth+1))
+		s += fmt.Sprintf("%s%s = %s\n", currindent, prepareKey(k), val.ValueToString(indentSize, depth+1))
 
 		keycount++
 	}
