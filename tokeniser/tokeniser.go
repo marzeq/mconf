@@ -16,6 +16,7 @@ func NewTokeniser(contents string, filePath string) Tokeniser {
 	return Tokeniser{
 		contents:  []rune(contents),
 		currIndex: 0,
+		filePath:  filePath,
 	}
 }
 
