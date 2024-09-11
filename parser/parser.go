@@ -358,7 +358,18 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 			fallthrough
 		case tokeniser.TOKEN_TYPE_STRING:
 			{
-				key := token.Value
+				var key string
+
+				if token.Type == tokeniser.TOKEN_TYPE_KEY {
+					key = token.Value
+				} else {
+					evkey, err := p.EvaluateStringValue(token)
+					if err != nil {
+						return nil, err
+					}
+
+					key = evkey
+				}
 
 				assign := p.Consume()
 
