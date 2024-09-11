@@ -145,6 +145,10 @@ func parseOptions() (options, string) {
 		}
 	}
 
+	if len(os.Args) < 2+shitfby {
+		return opts, usage(os.Args[0])
+	}
+
 	opts.Filename = os.Args[1+shitfby]
 	opts.AcessedProperties = os.Args[2+shitfby:]
 

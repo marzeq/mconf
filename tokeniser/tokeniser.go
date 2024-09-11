@@ -213,21 +213,29 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 		number = "0."
 	}
 
+	var mode string
+
 	if initial == '-' {
 		number = "-"
-		initial = t.Consume()
-	}
+		mode = TOKEN_TYPE_NUMBER_DECIMAL
 
-	mode := TOKEN_TYPE_NUMBER_DECIMAL
-
-	if initial == '0' && t.Peek() == 'x' {
-		t.Increment()
-		number = ""
+		if t.Peek() == '0' && t.PeekAhead(1) == 'x' {
+			mode = TOKEN_TYPE_NUMBER_HEX
+			t.Increment()
+			t.Increment()
+		} else if t.Peek() == '0' && t.PeekAhead(1) == 'b' {
+			mode = TOKEN_TYPE_NUMBER_BINARY
+			t.Increment()
+			t.Increment()
+		}
+	} else if initial == '0' && t.Peek() == 'x' {
 		mode = TOKEN_TYPE_NUMBER_HEX
-	} else if initial == '0' && t.Peek() == 'b' {
 		t.Increment()
-		number = ""
+	} else if initial == '0' && t.Peek() == 'b' {
 		mode = TOKEN_TYPE_NUMBER_BINARY
+		t.Increment()
+	} else {
+		mode = TOKEN_TYPE_NUMBER_DECIMAL
 	}
 
 	for {
