@@ -1,3 +1,11 @@
+# so we don't accidentally commit test files, if you need to, use the -f flag in git add
 *.mconf
+
+# also don't commit the artifacts of auto-transpiling of mconf (if you have it set up in your project)
+*.json
+
+# obviously don't commit the build folder
 build/
+
+# in case someone runs `go build` directly
 mconf

@@ -203,11 +203,15 @@ user = $USER
 
 #### default values
 
-if a constant is not defined, you can put a `?` after it and then another constant that will be used as the default value
+if a constant is not defined, you can put a `?` after it and then another constant or value that will be used as the default value
 
 ```mconf
 $default_user = "some_user"
 user = $USER?$default_user
+
+# OR
+
+user = $USER?"some_user"
 ```
 
 ### import

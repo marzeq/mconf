@@ -246,33 +246,31 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 	case tokeniser.TOKEN_TYPE_CONSTANT:
 		value, ok := p.GetConstants()[token.Value]
 
-		peeked := p.Peek()
+		if ok {
+			return value, nil
+		}
 
-		backup := ""
+		peeked := p.Peek()
 
 		if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
 			p.Increment()
 
-			b := p.Consume()
+			b := p.Peek()
 
-			if b.Type != tokeniser.TOKEN_TYPE_CONSTANT {
-				return nil, p.FormatErrorAtToken("Expected constant after `?`", b.Start)
+			if b.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+				bval, bok := p.GetConstants()[b.Value]
+
+				if bok {
+					p.Increment()
+					return bval, nil
+				} else {
+					return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", b.Value), b.Start)
+				}
+			} else {
+				return p.ParseValue()
 			}
-
-			backup = b.Value
 		}
-
-		if !ok {
-			if backup != "" {
-				value, ok = p.GetConstants()[backup]
-			}
-		}
-
-		if !ok {
-			return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
-		}
-
-		return value, nil
+		return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
 	case tokeniser.TOKEN_TYPE_OPEN_LIST:
 		parsedList, err := p.ParseList()
 		if err != nil {
