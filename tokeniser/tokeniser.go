@@ -3,20 +3,23 @@ package tokeniser
 import (
 	"fmt"
 	"os"
+	"path"
 	"unicode"
 )
 
 type Tokeniser struct {
-	contents  []rune
-	currIndex int
-	filePath  string
+	contents    []rune
+	currIndex   int
+	filePath    string
+	relativeDir string
 }
 
-func NewTokeniser(contents string, filePath string) Tokeniser {
+func NewTokeniser(contents string, filePath string, relativeDir string) Tokeniser {
 	return Tokeniser{
-		contents:  []rune(contents),
-		currIndex: 0,
-		filePath:  filePath,
+		contents:    []rune(contents),
+		currIndex:   0,
+		filePath:    filePath,
+		relativeDir: relativeDir,
 	}
 }
 
@@ -327,7 +330,15 @@ func (t *Tokeniser) GetCurrLineAndCol() Location {
 }
 
 func (t *Tokeniser) FormatErrorAt(message string, loc Location) error {
-	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Tokeniser error: %s", t.filePath, loc.Line, loc.Col, message))
+	var prettyFile string
+
+	if t.filePath == "" {
+		prettyFile = "(stdin)"
+	} else {
+		prettyFile = path.Join(t.relativeDir, t.filePath)
+	}
+
+	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Tokeniser error: %s", prettyFile, loc.Line, loc.Col, message))
 }
 
 func (t *Tokeniser) FormatError(message string) error {

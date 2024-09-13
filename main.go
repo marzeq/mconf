@@ -18,14 +18,14 @@ func check(err error) {
 	}
 }
 
-func ParseFromString(s string, rootDir string, rootFile string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
-	t := tokeniser.NewTokeniser(s, rootFile)
+func ParseFromString(s string, rootDir string, rootFile string, relativeDir string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
+	t := tokeniser.NewTokeniser(s, rootFile, relativeDir)
 	tokens, err := t.Tokenise()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	p := parser.NewParser(tokens, rootDir, rootFile)
+	p := parser.NewParser(tokens, rootDir, rootFile, relativeDir)
 	parsed, err := p.Parse()
 	if err != nil {
 		return nil, nil, err
@@ -43,14 +43,16 @@ func ParseFromFile(filename string) (map[string]parser.ParserValue, map[string]p
 
 	s := string(f)
 
-	fileDir, fdirErr := filepath.Abs(filepath.Dir(filename))
+	relativeDir := filepath.Dir(filename)
+
+	fileDir, fdirErr := filepath.Abs(relativeDir)
 	if fdirErr != nil {
 		return nil, nil, fdirErr
 	}
 
 	baseFile := filepath.Base(filename)
 
-	return ParseFromString(s, fileDir, baseFile)
+	return ParseFromString(s, fileDir, baseFile, relativeDir)
 }
 
 func ParseFromStdin() (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
@@ -71,7 +73,7 @@ func ParseFromStdin() (map[string]parser.ParserValue, map[string]parser.ParserVa
 		return nil, nil, absCwdErr
 	}
 
-	return ParseFromString(s, absCwd, "")
+	return ParseFromString(s, absCwd, "", cwd)
 }
 
 func readStdin() ([]byte, error) {

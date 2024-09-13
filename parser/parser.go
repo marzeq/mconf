@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -43,11 +44,12 @@ type Parser struct {
 	tokens      []tokeniser.Token
 	currIndex   int
 	rootDir     string
+	relativeDir string
 	currentFile string
 	importCache *map[string]importCacheEntry
 }
 
-func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string) Parser {
+func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string, relativeDir string) Parser {
 	importCache := make(map[string]importCacheEntry)
 
 	fullFile := filepath.Join(rootDir, currentFile)
@@ -61,6 +63,7 @@ func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string) Par
 		tokens:      tokens,
 		currIndex:   0,
 		rootDir:     rootDir,
+		relativeDir: relativeDir,
 		currentFile: currentFile,
 		importCache: &importCache,
 	}
@@ -152,11 +155,11 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) erro
 	if p.currentFile == "" {
 		prettyFile = "(stdin)"
 	} else {
-		prettyFile = p.currentFile
+		prettyFile = path.Join(p.relativeDir, p.currentFile)
 	}
 
 	if loc.Line == 0 && loc.Col == 0 {
-		return fmt.Errorf(fmt.Sprintf("%s - Parser error at EOF: %s", prettyFile, message))
+		return fmt.Errorf(fmt.Sprintf("%s (EOF) - Parser error: %s", prettyFile, message))
 	}
 
 	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Parser error: %s", prettyFile, loc.Line, loc.Col, message))
@@ -641,7 +644,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 						s := string(f)
 
-						t := tokeniser.NewTokeniser(s, relative)
+						t := tokeniser.NewTokeniser(s, relative, p.relativeDir)
 						tokens, errTokenise := t.Tokenise()
 						if errTokenise != nil {
 							return nil, errTokenise
