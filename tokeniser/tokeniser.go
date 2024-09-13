@@ -67,6 +67,10 @@ func (t *Tokeniser) ReadString() ([]string, []string, error) {
 	for {
 		c := t.Consume()
 
+		if c == 0 {
+			return nil, nil, t.FormatErrorAt("Unexpected end of file in string", loc)
+		}
+
 		if c == '$' {
 			openbrack := t.Consume()
 
