@@ -40,6 +40,8 @@ Examples:
 
 note that mconf fully suppports unicode, so a letter means any unicode latin letter and not just ascii letters, and string values can contain any unicode character
 
+note: if you just one want a one-file example, look at the [examples/example.mconf](./examples/example.mconf) file
+
 ### comments
 
 ```mconf

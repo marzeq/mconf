@@ -1,0 +1,61 @@
+# comment
+
+key = "value"
+"string as key" = "value"
+úńíçóđé = "value"
+# illegal: 123key = "value"
+# illegal: hello hi = "value"
+
+multiline = "hello
+world"
+with_escapes = "\"hello\nworld\""
+emojis_and_unicode = "😊 こんにちは！"
+formatted_string = "${USER}'s home directory is ${HOME}" # unlike bash, {}'s ARE required
+
+number = 123
+negative_number = -123
+float = 123.456
+negative_float = -123.456
+fancy_float = .5
+fancy_negative_float = -.5
+hexadecimal = 0x123
+binary = 0b101
+
+boolean = true
+false_boolean = false
+
+list = [1, 2, 3]
+mixed_list = [1, "two", 3.0, true]
+multi_dimensional_list = [[1, 2], [3, 4], [5, 6]]
+
+object = {
+  key = "value"
+  "string as key" = "value"
+  nested = {
+    key = "value"
+  }
+}
+object_with_commas = {
+  key = "value",
+  "string as key" = "value",
+  nested = {
+    key = "value",
+  },
+}
+
+# top level object, it's merged with the root object
+{
+  key = "value"
+}
+{
+  key2 = "value2"
+}
+
+$some_constant = "value"
+value_from_constant = $some_constant
+value_from_env = $USER
+backup_value = $undefined_variable?"default value"
+another_backup_value = $undefined_variable?$some_constant
+
+@import "another.mconf"
+@import { a, $b } "another.mconf"
