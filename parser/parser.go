@@ -57,11 +57,6 @@ func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string) Par
 		constants: make(map[string]ParserValue),
 	}
 
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		importCache[fullFile].constants[pair[0]] = &ParserValueString{Value: pair[1]}
-	}
-
 	return Parser{
 		tokens:      tokens,
 		currIndex:   0,
@@ -94,6 +89,33 @@ func (p *Parser) GetValues() map[string]ParserValue {
 
 func (p *Parser) GetConstants() map[string]ParserValue {
 	return (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)].constants
+}
+
+func GetEnv() map[string]ParserValue {
+	env := make(map[string]ParserValue)
+
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		env[pair[0]] = &ParserValueString{Value: pair[1]}
+	}
+
+	return env
+}
+
+func (p *Parser) GetConstant(name string) (ParserValue, bool) {
+	value, ok := p.GetConstants()[name]
+
+	if ok {
+		return value, true
+	}
+
+	value, ok = GetEnv()[name]
+
+	if ok {
+		return value, true
+	}
+
+	return nil, false
 }
 
 func (p *Parser) PeekAhead(i int) tokeniser.Token {
@@ -169,7 +191,7 @@ func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 
 		if i < len(token.StringSubs) {
 			constantName := token.StringSubs[i]
-			constantValue, ok := p.GetConstants()[constantName]
+			constantValue, ok := p.GetConstant(constantName)
 			if !ok {
 				return "", p.FormatErrorAtToken(fmt.Sprintf("Constant in string substitution `%s` not found", constantName), token.Start)
 			}
@@ -244,9 +266,40 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 
 		return &ParserValueBool{Value: converted}, nil
 	case tokeniser.TOKEN_TYPE_CONSTANT:
-		value, ok := p.GetConstants()[token.Value]
+		value, ok := p.GetConstant(token.Value)
 
 		if ok {
+			peeked := p.Peek()
+
+			if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
+				p.Increment()
+
+				unusedBackup := p.Consume()
+
+				switch unusedBackup.Type {
+				case tokeniser.TOKEN_TYPE_OPEN_LIST:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_CLOSE_LIST:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_OPEN_OBJ:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_CLOSE_OBJ:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_ASSIGN:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_COMMA:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_DOT:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_EOF:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_DIRECTIVE:
+					fallthrough
+				case tokeniser.TOKEN_TYPE_QUESTION_MARK:
+					return nil, p.FormatErrorAtToken("Unexpected token as constant backup, should be a valid value or constant", unusedBackup.Start)
+				}
+			}
+
 			return value, nil
 		}
 
@@ -258,7 +311,7 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 			b := p.Peek()
 
 			if b.Type == tokeniser.TOKEN_TYPE_CONSTANT {
-				bval, bok := p.GetConstants()[b.Value]
+				bval, bok := p.GetConstant(b.Value)
 
 				if bok {
 					p.Increment()

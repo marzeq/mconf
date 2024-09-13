@@ -18,29 +18,34 @@ func check(err error) {
 	}
 }
 
-func ParseFromString(s string, rootDir string, rootFile string) (map[string]parser.ParserValue, error) {
+func ParseFromString(s string, rootDir string, rootFile string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
 	t := tokeniser.NewTokeniser(s, rootFile)
 	tokens, err := t.Tokenise()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	p := parser.NewParser(tokens, rootDir, rootFile)
+	parsed, err := p.Parse()
+	if err != nil {
+		return nil, nil, err
+	}
+	constants := p.GetConstants()
 
-	return p.Parse()
+	return parsed, constants, nil
 }
 
-func ParseFromFile(filename string) (map[string]parser.ParserValue, error) {
+func ParseFromFile(filename string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
 	f, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	s := string(f)
 
 	fileDir, fdirErr := filepath.Abs(filepath.Dir(filename))
 	if fdirErr != nil {
-		return nil, fdirErr
+		return nil, nil, fdirErr
 	}
 
 	baseFile := filepath.Base(filename)
@@ -48,22 +53,22 @@ func ParseFromFile(filename string) (map[string]parser.ParserValue, error) {
 	return ParseFromString(s, fileDir, baseFile)
 }
 
-func ParseFromStdin() (map[string]parser.ParserValue, error) {
+func ParseFromStdin() (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
 	b, err := readStdin()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	s := string(b)
 
 	cwd, cwdErr := os.Getwd()
 	if cwdErr != nil {
-		return nil, cwdErr
+		return nil, nil, cwdErr
 	}
 
 	absCwd, absCwdErr := filepath.Abs(cwd)
 	if absCwdErr != nil {
-		return nil, absCwdErr
+		return nil, nil, absCwdErr
 	}
 
 	return ParseFromString(s, absCwd, "")
@@ -82,6 +87,7 @@ type options struct {
 	Filename          string
 	AcessedProperties []string
 	ToJson            bool
+	ShowConstants     bool
 }
 
 func usage(progname string) string {
@@ -90,12 +96,13 @@ func usage(progname string) string {
 
 Arguments:
   <filename>        Path to the configuration file. Use '-' to read from stdin.
-  [-- property1 property2 ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed. -- is simply there for readability.
+  [-- property1 property2 ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed. '--' is simply there for readability.
 
 Options:
   -h, --help        Show this message
   -v, --version     Show version
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
+  -c, --constants   Show constants (only displayed when no properties are provided)
 
 Examples:
   %s config.mconf -- property1 property2
@@ -109,6 +116,7 @@ func version() string {
 func parseOptions() (options, string) {
 	opts := options{}
 	opts.ToJson = false
+	opts.ShowConstants = false
 
 	args := os.Args[1:]
 
@@ -142,6 +150,8 @@ func parseOptions() (options, string) {
 					return opts, version()
 				} else if arg == "--json" {
 					opts.ToJson = true
+				} else if arg == "--constants" {
+					opts.ShowConstants = true
 				}
 			} else {
 				for _, c := range arg[1:] {
@@ -152,6 +162,8 @@ func parseOptions() (options, string) {
 						return opts, version()
 					case 'j':
 						opts.ToJson = true
+					case 'c':
+						opts.ShowConstants = true
 					}
 				}
 			}
@@ -182,18 +194,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	var m map[string]parser.ParserValue
+	var globalObj map[string]parser.ParserValue
+	var constants map[string]parser.ParserValue
 	var parsingErr error
 
 	if opts.Filename == "-" {
-		m, parsingErr = ParseFromStdin()
+		globalObj, constants, parsingErr = ParseFromStdin()
 	} else {
-		m, parsingErr = ParseFromFile(opts.Filename)
+		globalObj, constants, parsingErr = ParseFromFile(opts.Filename)
 	}
 
 	check(parsingErr)
 
-	var indexedValue parser.ParserValue = &parser.ParserValueObject{Value: m}
+	var indexedValue parser.ParserValue = &parser.ParserValueObject{Value: globalObj}
 
 	indexedString := ""
 
@@ -262,5 +275,11 @@ func main() {
 		fmt.Println(cast.Value)
 	} else {
 		fmt.Println(indexedValue.ValueToString(2))
+
+		if len(opts.AcessedProperties) == 0 && opts.ShowConstants {
+			for k, v := range constants {
+				fmt.Printf("$%s = %s\n", k, v.ValueToString(2))
+			}
+		}
 	}
 }

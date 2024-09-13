@@ -30,6 +30,7 @@ Options:
   -h, --help        Show this message
   -v, --version     Show version
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
+  -c, --constants   Show constants (only displayed when no properties are provided)
 
 Examples:
   mconf config.mconf -- property1 property2
