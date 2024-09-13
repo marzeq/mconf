@@ -552,23 +552,29 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 							}
 						}
 
-						importPath := p.Consume()
+						ipToken := p.Consume()
 
-						if importPath.Type != tokeniser.TOKEN_TYPE_STRING {
-							return nil, p.FormatErrorAtToken("Expected string path to import", importPath.Start)
+						if ipToken.Type != tokeniser.TOKEN_TYPE_STRING {
+							return nil, p.FormatErrorAtToken("Expected string path to import", ipToken.Start)
 						}
 
-						if importPath.Value == p.currentFile {
-							return nil, p.FormatErrorAtToken("Cannot import the same file", importPath.Start)
+						importPath, ipPathErr := p.EvaluateStringValue(ipToken)
+
+						if ipPathErr != nil {
+							return nil, ipPathErr
 						}
 
-						fullFilePath := filepath.Join(p.rootDir, importPath.Value)
+						if importPath == p.currentFile {
+							return nil, p.FormatErrorAtToken("Cannot import the same file", ipToken.Start)
+						}
+
+						fullFilePath := filepath.Join(p.rootDir, importPath)
 						relative, err := filepath.Rel(p.rootDir, fullFilePath)
 
 						ic, icOk := (*p.importCache)[fullFilePath]
 
 						if icOk {
-							err := p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, importPath.Start, importPath.Value)
+							err := p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, ipToken.Start, importPath)
 							if err != nil {
 								return nil, err
 							}
@@ -600,7 +606,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 							return nil, fmt.Errorf("Unreachable code reached, please report this as a bug")
 						}
 
-						err = p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, importPath.Start, importPath.Value)
+						err = p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, ipToken.Start, importPath)
 						if err != nil {
 							return nil, err
 						}

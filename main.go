@@ -86,11 +86,11 @@ type options struct {
 
 func usage(progname string) string {
 	return fmt.Sprintf(`Usage:
-  %s <filename> [properties ...]
+  %s <filename> [-- property1 property2 ...]
 
 Arguments:
   <filename>        Path to the configuration file. Use '-' to read from stdin.
-  [properties ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed.
+  [-- property1 property2 ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed. -- is simply there for readability.
 
 Options:
   -h, --help        Show this message
@@ -98,8 +98,8 @@ Options:
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
 
 Examples:
-  %s config.mconf property1 property2
-  cat config.mconf | %s - property1 property2`, progname, progname, progname)
+  %s config.mconf -- property1 property2
+  cat config.mconf | %s - -- property1 property2`, progname, progname, progname)
 }
 
 func version() string {
@@ -110,47 +110,66 @@ func parseOptions() (options, string) {
 	opts := options{}
 	opts.ToJson = false
 
-	if len(os.Args) == 1 {
-		return opts, usage(os.Args[0])
+	args := os.Args[1:]
+
+	binname := filepath.Base(os.Args[0])
+
+	if len(args) == 0 {
+		return opts, usage(binname)
 	}
 
-	shitfby := 0
+	i := 0
+	providedFilename := false
+	for {
+		if i >= len(args) {
+			break
+		}
 
-	for _, arg := range os.Args[1:] {
-		if arg[0] == '-' && arg != "-" {
+		arg := args[i]
+
+		if arg[0] == '-' {
 			if arg[1] == '-' {
-				if arg == "--help" {
-					return opts, usage(os.Args[0])
+				if arg == "--" {
+					if !providedFilename {
+						return opts, "No filename provided"
+					}
+
+					opts.AcessedProperties = args[i+1:]
+					break
+				} else if arg == "--help" {
+					return opts, usage(binname)
 				} else if arg == "--version" {
 					return opts, version()
 				} else if arg == "--json" {
 					opts.ToJson = true
 				}
-				// for now, ignore unknown options
-				// i think thaths the right approach
-				// else {}
 			} else {
 				for _, c := range arg[1:] {
-					if c == 'h' {
-						return opts, usage(os.Args[0])
-					} else if c == 'v' {
+					switch c {
+					case 'h':
+						return opts, usage(binname)
+					case 'v':
 						return opts, version()
-					} else if c == 'j' {
+					case 'j':
 						opts.ToJson = true
 					}
 				}
 			}
+		} else {
+			if providedFilename {
+				return opts, "Provided multiple filenames, only one is allowed"
+			}
 
-			shitfby++
+			opts.Filename = arg
+			providedFilename = true
 		}
+
+		i++
 	}
 
-	if len(os.Args) < 2+shitfby {
-		return opts, usage(os.Args[0])
+	if !providedFilename {
+		return opts, "No filename provided"
 	}
-
-	opts.Filename = os.Args[1+shitfby]
-	opts.AcessedProperties = os.Args[2+shitfby:]
 
 	return opts, ""
 }

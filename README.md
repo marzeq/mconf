@@ -20,11 +20,11 @@ if you don't want to use just, you can always use the go build and go run comman
 
 ```
 Usage:
-  mconf <filename> [properties ...]
+  mconf <filename> [-- property1 property2 ...]
 
 Arguments:
   <filename>        Path to the configuration file. Use '-' to read from stdin.
-  [properties ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed.
+  [-- property1 property2 ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed. '--' is simply there for readability.
 
 Options:
   -h, --help        Show this message
@@ -32,8 +32,8 @@ Options:
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
 
 Examples:
-  mconf config.mconf property1 property2
-  cat config.mconf | mconf - property1 property
+  mconf config.mconf -- property1 property2
+  cat config.mconf | mconf - -- property1 property2
 ```
 
 ## spec
