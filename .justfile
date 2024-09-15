@@ -4,12 +4,12 @@ default:
 builddir := "build"
 
 build:
-  mkdir -p {{builddir}}/current-target
-  go build -o {{builddir}}/current-target/mconf .
+  mkdir -p {{builddir}}
+  go build -o {{builddir}}/mconf .
 
 build-target OS ARCH:
-  mkdir -p {{builddir}}/{{OS}}/{{ARCH}}
-  GOOS={{OS}} GOARCH={{ARCH}} go build -o {{builddir}}/{{OS}}/{{ARCH}}/mconf{{ if OS == "windows" { ".exe" } else { "" } }}
+  mkdir -p {{builddir}}
+  GOOS={{OS}} GOARCH={{ARCH}} go build -o {{builddir}}/mconf-{{OS}}-{{ARCH}}{{ if OS == "windows" { ".exe" } else { "" } }}
 
 build-all: \
   (build-target "windows" "amd64") \

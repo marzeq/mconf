@@ -4,14 +4,18 @@ this is my own configuration language, made mostly for fun and to learn more abo
 
 if you have any suggestions, feedback or questions, feel free to contact me in any way you want (open an issue here, message me on any platform, etc.)
 
+## getting the binary
+
+go onto the [releases page](https://github.com/marzeq/mconf/releases) and download the binary for your platform
+
 ## building & running
 
 this repo comes with a justfile, so you can use [just](https://github.com/casey/just) to run the commands
 
 ```sh
-just run # runs the project, equivalent to `go run .`
-just build # builds the project in build/current-arch, equivalent to `go build .`
-just build-all # builds the project for every combination of: windows, darwin (macos) and linux & amd64 and arm64
+just run        # runs the project, equivalent to `go run .`
+just build      # builds the project in build/current-arch, equivalent to `go build .`
+just build-all  # builds the project for every combination of: windows, darwin (macos) and linux & amd64 and arm64
 ```
 
 if you don't want to use just, you can always use the go build and go run commands directly
