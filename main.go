@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/marzeq/mconf/parser"
 	"github.com/marzeq/mconf/tokeniser"
@@ -90,6 +91,7 @@ type options struct {
 	AcessedProperties []string
 	ToJson            bool
 	ShowConstants     bool
+	EnvFile           string
 }
 
 func usage(progname string) string {
@@ -97,13 +99,15 @@ func usage(progname string) string {
   %s <filename> [-- property1 property2 ...]
 
 Arguments:
-  <filename>        Path to the configuration file. Use '-' to read from stdin.
+  <filename>                    Path to the configuration file. Use '-' to read from stdin.
   [-- property1 property2 ...]  List of properties to access. Multiple properties are used to access nested objects or lists. If no properties are provided, the global object is printed. '--' is simply there for readability.
 
 Options:
   -h, --help        Show this message
   -v, --version     Show version
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
+  -d, --dotenv      Load .env file in current directory
+	--envfile <file>  Load specified enviorment variables file
   -c, --constants   Show constants (only displayed when no properties are provided)
 
 Examples:
@@ -115,17 +119,18 @@ func version() string {
 	return "mconf (development version)"
 }
 
-func parseOptions() (options, string) {
+func parseOptions() (options, string, uint) {
 	opts := options{}
 	opts.ToJson = false
 	opts.ShowConstants = false
+	opts.EnvFile = ""
 
 	args := os.Args[1:]
 
 	binname := filepath.Base(os.Args[0])
 
 	if len(args) == 0 {
-		return opts, usage(binname)
+		return opts, usage(binname), 1
 	}
 
 	i := 0
@@ -141,37 +146,48 @@ func parseOptions() (options, string) {
 			if arg[1] == '-' {
 				if arg == "--" {
 					if !providedFilename {
-						return opts, "No filename provided"
+						return opts, "No filename provided", 0
 					}
 
 					opts.AcessedProperties = args[i+1:]
 					break
 				} else if arg == "--help" {
-					return opts, usage(binname)
+					return opts, usage(binname), 0
 				} else if arg == "--version" {
-					return opts, version()
+					return opts, version(), 0
 				} else if arg == "--json" {
 					opts.ToJson = true
 				} else if arg == "--constants" {
 					opts.ShowConstants = true
+				} else if arg == "--dotenv" {
+					opts.EnvFile = ".env"
+				} else if arg == "--envfile" {
+					if i+1 >= len(args) {
+						return opts, "No argument provided for --envfile", 1
+					} else {
+						opts.EnvFile = args[i+1]
+						i++
+					}
 				}
 			} else {
 				for _, c := range arg[1:] {
 					switch c {
 					case 'h':
-						return opts, usage(binname)
+						return opts, usage(binname), 0
 					case 'v':
-						return opts, version()
+						return opts, version(), 0
 					case 'j':
 						opts.ToJson = true
 					case 'c':
 						opts.ShowConstants = true
+					case 'd':
+						opts.EnvFile = ".env"
 					}
 				}
 			}
 		} else {
 			if providedFilename {
-				return opts, "Provided multiple filenames, only one is allowed"
+				return opts, "Provided multiple filenames, only one is allowed", 1
 			}
 
 			opts.Filename = arg
@@ -182,23 +198,73 @@ func parseOptions() (options, string) {
 	}
 
 	if !providedFilename {
-		return opts, "No filename provided"
+		return opts, "No filename provided", 1
 	}
 
-	return opts, ""
+	return opts, "", 0
 }
 
 func main() {
-	opts, usage := parseOptions()
+	opts, usage, exitcode := parseOptions()
 
 	if usage != "" {
 		fmt.Println(usage)
-		os.Exit(1)
+		os.Exit(int(exitcode))
 	}
 
 	var globalObj map[string]parser.ParserValue
 	var constants map[string]parser.ParserValue
 	var parsingErr error
+
+	if opts.EnvFile != "" {
+		err := os.Setenv("MCONF_ENV_FILE", opts.EnvFile)
+		if err != nil {
+			fmt.Println("Error setting environment variable MCONF_ENV_FILE")
+			os.Exit(1)
+		}
+
+		envFile, err := os.ReadFile(opts.EnvFile)
+		if err != nil {
+			fmt.Printf("Error reading environment file %s\n", opts.EnvFile)
+			os.Exit(1)
+		}
+
+		envFileStr := string(envFile)
+		envLines := strings.Split(envFileStr, "\n")
+
+		for _, line := range envLines {
+			if line == "" {
+				continue
+			}
+
+			parts := strings.SplitN(line, "=", 2)
+
+			if len(parts) != 2 {
+				fmt.Printf("Error parsing environment file %s\n", opts.EnvFile)
+				os.Exit(1)
+			}
+
+			if parts[0] == "" {
+				fmt.Printf("Error setting environment variable (%s)\n", line)
+				os.Exit(1)
+			}
+
+			if parts[1][0] == '"' && parts[1][len(parts[1])-1] == '"' {
+				parts[1] = parts[1][1 : len(parts[1])-1]
+				parts[1] = strings.ReplaceAll(parts[1], "\\n", "\n")
+				parts[1] = strings.ReplaceAll(parts[1], "\\r", "\r")
+				parts[1] = strings.ReplaceAll(parts[1], "\\t", "\t")
+				parts[1] = strings.ReplaceAll(parts[1], "\\\"", "\"")
+				parts[1] = strings.ReplaceAll(parts[1], "\\\\", "\\")
+			}
+
+			err := os.Setenv(parts[0], parts[1])
+			if err != nil {
+				fmt.Printf("Error setting environment variable (%s)\n", line)
+				os.Exit(1)
+			}
+		}
+	}
 
 	if opts.Filename == "-" {
 		globalObj, constants, parsingErr = ParseFromStdin()
@@ -262,6 +328,10 @@ func main() {
 	}
 
 	if opts.ToJson {
+		if opts.ShowConstants {
+			fmt.Printf("Displaying constants is not supported when outputting as JSON\n")
+			os.Exit(1)
+		}
 		fmt.Println(indexedValue.ToJSONString())
 		return
 	}
