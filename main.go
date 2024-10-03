@@ -143,6 +143,17 @@ func parseOptions() (options, string, uint) {
 		arg := args[i]
 
 		if arg[0] == '-' {
+			if arg == "-" {
+				if providedFilename {
+					return opts, "Provided multiple filenames, only one is allowed", 1
+				}
+
+				opts.Filename = "-"
+				providedFilename = true
+				i++
+				continue
+			}
+
 			if arg[1] == '-' {
 				if arg == "--" {
 					if !providedFilename {
