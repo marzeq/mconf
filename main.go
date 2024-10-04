@@ -107,7 +107,7 @@ Options:
   -v, --version     Show version
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
   -d, --dotenv      Load .env file in current directory
-	--envfile <file>  Load specified enviorment variables file
+  --envfile <file>  Load specified enviorment variables file
   -c, --constants   Show constants (only displayed when no properties are provided)
 
 Examples:
@@ -116,7 +116,7 @@ Examples:
 }
 
 func version() string {
-	return "mconf (version 0.1.1)"
+	return "mconf (version 0.1.2)"
 }
 
 func parseOptions() (options, string, uint) {

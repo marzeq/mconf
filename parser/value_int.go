@@ -12,6 +12,10 @@ func (v *ParserValueInt) GetType() string {
 	return PARSER_VALUE_TYPE_INT
 }
 
+func (v *ParserValueInt) IsNull() bool {
+	return false
+}
+
 func (v *ParserValueInt) ValueToString(indentAndDepth ...int) string {
 	return v.Value.String()
 }

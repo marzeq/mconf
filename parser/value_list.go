@@ -14,6 +14,10 @@ func (v *ParserValueList) GetType() string {
 	return PARSER_VALUE_TYPE_LIST
 }
 
+func (v *ParserValueList) IsNull() bool {
+	return false
+}
+
 func (v *ParserValueList) OneLineStringValue() string {
 	if len(v.Value) == 0 {
 		return "[]"

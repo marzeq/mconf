@@ -251,6 +251,23 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 			if unicode.IsDigit(next) || next == '.' {
 				number += string(next)
 				t.Increment()
+			} else if next == 'e' || next == 'E' {
+				number += string(next)
+				t.Increment()
+
+				next = t.Peek()
+				if next == '+' || next == '-' {
+					number += string(next)
+					t.Increment()
+				}
+
+				next = t.Peek()
+				if !unicode.IsDigit(next) {
+					return "", "", t.FormatError(fmt.Sprintf("Expected digit after exponent in decimal number, got `%c`", next))
+				}
+
+				number += string(next)
+				t.Increment()
 			} else if next == '_' {
 				t.Increment()
 			} else if unicode.IsLetter(next) {
@@ -397,6 +414,8 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 				tokens = append(tokens, BoolToken("true", loc))
 			} else if word == "false" || word == "no" || word == "off" {
 				tokens = append(tokens, BoolToken("false", loc))
+			} else if word == "null" {
+				tokens = append(tokens, NullToken(loc))
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))
 
@@ -435,7 +454,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 		} else {
 			t.Increment()
 
-			if c == '=' {
+			if c == '=' || c == ':' {
 				tokens = append(tokens, AssignToken(loc))
 			} else if c == '$' {
 				word, error := t.ReadWord()

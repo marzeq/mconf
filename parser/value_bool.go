@@ -13,6 +13,10 @@ func (v *ParserValueBool) GetType() string {
 	return PARSER_VALUE_TYPE_BOOL
 }
 
+func (v *ParserValueBool) IsNull() bool {
+	return false
+}
+
 func (v *ParserValueBool) ValueToString(indentAndDepth ...int) string {
 	return strconv.FormatBool(v.Value)
 }

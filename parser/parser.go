@@ -15,8 +15,8 @@ const (
 	PARSER_VALUE_TYPE_STRING = "STRING"
 	PARSER_VALUE_TYPE_FLOAT  = "FLOAT"
 	PARSER_VALUE_TYPE_INT    = "INT"
-	PARSER_VALUE_TYPE_UINT   = "UINT"
 	PARSER_VALUE_TYPE_BOOL   = "BOOL"
+	PARSER_VALUE_TYPE_NULL   = "NULL"
 	PARSER_VALUE_TYPE_LIST   = "LIST"
 	PARSER_VALUE_TYPE_OBJECT = "OBJECT"
 )
@@ -33,6 +33,8 @@ type ParserValue interface {
 	GetBool() (bool, error)
 	GetList() ([]ParserValue, error)
 	GetObject() (map[string]ParserValue, error)
+
+	IsNull() bool
 }
 
 type importCacheEntry struct {
@@ -268,6 +270,8 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 		}
 
 		return &ParserValueBool{Value: converted}, nil
+	case tokeniser.TOKEN_TYPE_NULL:
+		return &ParserValueNull{true}, nil
 	case tokeniser.TOKEN_TYPE_CONSTANT:
 		value, ok := p.GetConstant(token.Value)
 
@@ -367,6 +371,8 @@ func (p *Parser) ParseList() ([]ParserValue, error) {
 		case tokeniser.TOKEN_TYPE_NUMBER_BINARY:
 			fallthrough
 		case tokeniser.TOKEN_TYPE_BOOL:
+			fallthrough
+		case tokeniser.TOKEN_TYPE_NULL:
 			fallthrough
 		case tokeniser.TOKEN_TYPE_OPEN_LIST:
 			fallthrough

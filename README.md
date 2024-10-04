@@ -35,7 +35,7 @@ Options:
   -v, --version     Show version
   -j, --json        Output as JSON (in a compact format, prettyfication is up to the user)
   -d, --dotenv      Load .env file in current directory
-	--envfile <file>  Load specified enviorment variables file
+  --envfile <file>  Load specified enviorment variables file
   -c, --constants   Show constants (only displayed when no properties are provided)
 
 Examples:
@@ -45,9 +45,11 @@ Examples:
 
 ## spec
 
-note that mconf fully suppports unicode, so a letter means any unicode latin letter and not just ascii letters, and string values can contain any unicode character
+mconf fully suppports unicode, so a letter means any unicode latin letter and not just ascii letters, and string values can contain any unicode character
 
 note: if you just one want a one-file example, look at the [examples/example.mconf](./examples/example.mconf) file
+
+mconf is a superset of JSON, so any valid JSON file (base spec) is also a valid mconf file
 
 ### comments
 
@@ -63,6 +65,8 @@ key = "value"
 "strings as keys" = "are allowed"
 óóóó_unicode = true
 23abc = false # illegal, keys must start with a letter or underscore
+
+test: 1 # colon is also valid for JSON compatibility reasons
 ```
 
 if a key is defined many times, the last one will shadow the previous ones
@@ -103,6 +107,10 @@ fancy_float = .5
 hex = 0x123
 # binary value
 bin = 0b1010
+
+# scientific notation
+sci = 1.23e3
+scineg = 1.23e-3
 ```
 
 ### boolean values
@@ -115,6 +123,14 @@ yes_are_bools_too = yes
 and_nos_as_well = no
 and_on = on
 and_off = off
+```
+
+### null values
+
+only really added for JSON compatibility
+
+```mconf
+null_value = null
 ```
 
 ### list values

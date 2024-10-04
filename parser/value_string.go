@@ -13,6 +13,10 @@ func (v *ParserValueString) GetType() string {
 	return PARSER_VALUE_TYPE_STRING
 }
 
+func (v *ParserValueString) IsNull() bool {
+	return false
+}
+
 func (v *ParserValueString) ValueToString(indentAndDepth ...int) string {
 	replaced := strings.ReplaceAll(v.Value, "\"", "\\\"")
 	replaced = strings.ReplaceAll(replaced, "\n", "\\n")

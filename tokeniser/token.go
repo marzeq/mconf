@@ -13,6 +13,7 @@ const (
 	TOKEN_TYPE_NUMBER_BINARY  = "NUMBER_BINARY"
 	TOKEN_TYPE_STRING         = "STRING"
 	TOKEN_TYPE_BOOL           = "BOOL"
+	TOKEN_TYPE_NULL           = "NULL"
 	TOKEN_TYPE_OPEN_LIST      = "OPEN_LIST"
 	TOKEN_TYPE_CLOSE_LIST     = "CLOSE_LIST"
 	TOKEN_TYPE_COMMA          = "COMMA"
@@ -126,6 +127,14 @@ func BoolToken(value string, start Location) Token {
 	return Token{
 		Type:  TOKEN_TYPE_BOOL,
 		Value: value,
+		Start: start,
+	}
+}
+
+func NullToken(start Location) Token {
+	return Token{
+		Type:  TOKEN_TYPE_NULL,
+		Value: NO_VALUE,
 		Start: start,
 	}
 }

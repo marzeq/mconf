@@ -16,6 +16,10 @@ func (v *ParserValueObject) GetType() string {
 	return PARSER_VALUE_TYPE_OBJECT
 }
 
+func (v *ParserValueObject) IsNull() bool {
+	return false
+}
+
 func applyEscapes(s string) string {
 	s = strings.ReplaceAll(s, "\\", "\\\\")
 	s = strings.ReplaceAll(s, "\"", "\\\"")
