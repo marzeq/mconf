@@ -393,11 +393,9 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 				return nil, error
 			}
 
-			if word == "true" || word == "false" {
-				tokens = append(tokens, BoolToken(word, loc))
-			} else if word == "yes" {
+			if word == "true" || word == "yes" || word == "on" {
 				tokens = append(tokens, BoolToken("true", loc))
-			} else if word == "no" {
+			} else if word == "false" || word == "no" || word == "off" {
 				tokens = append(tokens, BoolToken("false", loc))
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))

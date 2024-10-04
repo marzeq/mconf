@@ -113,6 +113,8 @@ also_a_bool = false
 
 yes_are_bools_too = yes
 and_nos_as_well = no
+and_on = on
+and_off = off
 ```
 
 ### list values
