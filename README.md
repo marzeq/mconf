@@ -110,6 +110,9 @@ bin = 0b1010
 ```mconf
 a_bool = true
 also_a_bool = false
+
+yes_are_bools_too = yes
+and_nos_as_well = no
 ```
 
 ### list values

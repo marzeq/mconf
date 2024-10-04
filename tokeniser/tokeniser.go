@@ -395,6 +395,10 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 
 			if word == "true" || word == "false" {
 				tokens = append(tokens, BoolToken(word, loc))
+			} else if word == "yes" {
+				tokens = append(tokens, BoolToken("true", loc))
+			} else if word == "no" {
+				tokens = append(tokens, BoolToken("false", loc))
 			} else {
 				tokens = append(tokens, KeyToken(word, loc))
 
