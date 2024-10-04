@@ -1,6 +1,7 @@
 # comment
 
 key = "value"
+key: "value" # for compatibility with JSON
 "string as key" = "value"
 úńíçóđé = "value"
 # illegal: 123key = "value"
@@ -18,11 +19,19 @@ float = 123.456
 negative_float = -123.456
 fancy_float = .5
 fancy_negative_float = -.5
+sci = 1.23e4
+scineg = 1.23e-4
 hexadecimal = 0x123
 binary = 0b101
 
 boolean = true
 false_boolean = false
+also_boolean = on
+also_false_boolean = off
+also_also_boolean = yes
+also_also_false_boolean = no
+
+null_value = null
 
 list = [1, 2, 3]
 mixed_list = [1, "two", 3.0, true]
@@ -56,6 +65,7 @@ value_from_constant = $some_constant
 value_from_env = $USER
 backup_value = $undefined_variable?"default value"
 another_backup_value = $undefined_variable?$some_constant
+$PORT = $PORT?"8080" # neat trick to set default values
 
 @import "another.mconf"
 @import { a, $b } "another.mconf"

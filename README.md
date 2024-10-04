@@ -1,12 +1,20 @@
 # mconf
 
-this is my own configuration language, made mostly for fun and to learn more about tokenisation and parsing
+## why?
 
-if you have any suggestions, feedback or questions, feel free to contact me in any way you want (open an issue here, message me on any platform, etc.)
+this was originally made as a recreational programming exercise and a way to learn more about tokenisation and parsing
+
+as i was working on it, it grew on me that i actually prefer the syntax of it over any other 
 
 ## getting the binary
 
 go onto the [releases page](https://github.com/marzeq/mconf/releases) and download the binary for your platform
+
+## editor support
+
+for now, there is only a tree-sitter parser for mconf, which you can find [here](https://github.com/marzeq/tree-sitter-mconf). if you know how to make a syntax highlighter for your editor, you can use this to make one.
+
+for neovim, i suggest you look at my [dotfiles](https://github.com/marzeq/dotfiles) to see how i setup a custom tree-sitter parser
 
 ## building & running
 
@@ -64,9 +72,9 @@ a = 1 # this is a comment as well
 key = "value"
 "strings as keys" = "are allowed"
 óóóó_unicode = true
-23abc = false # illegal, keys must start with a letter or underscore
-
 test: 1 # colon is also valid for JSON compatibility reasons
+
+23abc = false # illegal, keys must start with a letter or underscore
 ```
 
 if a key is defined many times, the last one will shadow the previous ones

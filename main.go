@@ -116,7 +116,7 @@ Examples:
 }
 
 func version() string {
-	return "mconf (version 0.1.2)"
+	return "mconf version 1.0"
 }
 
 func parseOptions() (options, string, uint) {
