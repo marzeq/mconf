@@ -217,6 +217,30 @@ func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 	return sb, nil
 }
 
+func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
+	token := p.Consume()
+
+	if token.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+		value, ok := p.GetConstant(token.Value)
+
+		if ok {
+			return value, nil
+		}
+
+		peeked := p.Peek()
+
+		if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
+			p.Increment()
+			return p.ParseConstantWithBackup()
+		}
+
+		return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
+	} else {
+		p.GoBack()
+		return p.ParseValue()
+	}
+}
+
 func (p *Parser) ParseValue() (ParserValue, error) {
 	token := p.Consume()
 
@@ -315,20 +339,12 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 		if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
 			p.Increment()
 
-			b := p.Peek()
-
-			if b.Type == tokeniser.TOKEN_TYPE_CONSTANT {
-				bval, bok := p.GetConstant(b.Value)
-
-				if bok {
-					p.Increment()
-					return bval, nil
-				} else {
-					return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", b.Value), b.Start)
-				}
-			} else {
-				return p.ParseValue()
+			gotvalue, err := p.ParseConstantWithBackup()
+			if err != nil {
+				return nil, err
 			}
+
+			return gotvalue, nil
 		}
 		return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
 	case tokeniser.TOKEN_TYPE_OPEN_LIST:
