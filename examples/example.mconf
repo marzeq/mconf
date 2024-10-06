@@ -65,7 +65,12 @@ value_from_constant = $some_constant
 value_from_env = $USER
 backup_value = $undefined_variable?"default value"
 another_backup_value = $undefined_variable?$some_constant
-$PORT = $PORT?"8080" # neat trick to set default values
+
+$use_https = true
+$port = $PORT ? $use_https~443|80
+$protocol = $use_https ~ "https" | "http"
+$host = $HOST ? "localhost"
+$base_url = "${protocol}://${host}:${port}"
 
 @import "another.mconf"
 @import { a, $b } "another.mconf"
