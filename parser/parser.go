@@ -224,6 +224,26 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 		value, ok := p.GetConstant(token.Value)
 
 		if ok {
+			for {
+				next := p.Peek()
+
+				if next.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
+					p.Increment()
+
+					unusedBackup := p.Consume()
+
+					if unusedBackup.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+						continue
+					} else {
+						p.GoBack()
+						p.ParseValue()
+						break
+					}
+				} else {
+					break
+				}
+			}
+
 			return value, nil
 		}
 
@@ -297,56 +317,13 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 	case tokeniser.TOKEN_TYPE_NULL:
 		return &ParserValueNull{true}, nil
 	case tokeniser.TOKEN_TYPE_CONSTANT:
-		value, ok := p.GetConstant(token.Value)
-
-		if ok {
-			peeked := p.Peek()
-
-			if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
-				p.Increment()
-
-				unusedBackup := p.Consume()
-
-				switch unusedBackup.Type {
-				case tokeniser.TOKEN_TYPE_OPEN_LIST:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_CLOSE_LIST:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_OPEN_OBJ:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_CLOSE_OBJ:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_ASSIGN:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_COMMA:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_DOT:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_EOF:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_DIRECTIVE:
-					fallthrough
-				case tokeniser.TOKEN_TYPE_QUESTION_MARK:
-					return nil, p.FormatErrorAtToken("Unexpected token as constant backup, should be a valid value or constant", unusedBackup.Start)
-				}
-			}
-
-			return value, nil
+		p.GoBack()
+		value, err := p.ParseConstantWithBackup()
+		if err != nil {
+			return nil, err
 		}
 
-		peeked := p.Peek()
-
-		if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
-			p.Increment()
-
-			gotvalue, err := p.ParseConstantWithBackup()
-			if err != nil {
-				return nil, err
-			}
-
-			return gotvalue, nil
-		}
-		return nil, p.FormatErrorAtToken(fmt.Sprintf("Constant `%s` not found", token.Value), token.Start)
+		return value, nil
 	case tokeniser.TOKEN_TYPE_OPEN_LIST:
 		parsedList, err := p.ParseList()
 		if err != nil {
