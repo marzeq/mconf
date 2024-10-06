@@ -265,7 +265,10 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 						continue
 					} else {
 						p.GoBack()
-						p.ParseValue()
+						_, err := p.ParseValue()
+						if err != nil {
+							return nil, err
+						}
 						break
 					}
 				} else {
