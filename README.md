@@ -57,7 +57,7 @@ mconf fully suppports unicode, so a letter means any unicode latin letter and no
 
 note: if you just one want a one-file example, look at the [examples/example.mconf](./examples/example.mconf) file
 
-mconf is a superset of JSON, so any valid JSON file (base spec) is also a valid mconf file
+mconf is (almost) a superset of JSON, so any valid JSON file (base spec) that starts with an object can be parsed by mconf
 
 ### comments
 
