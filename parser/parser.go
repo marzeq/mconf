@@ -217,6 +217,35 @@ func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 	return sb, nil
 }
 
+func (p *Parser) ParseTernaryExpression(condition ParserValue) (ParserValue, error) {
+	first, err := p.ParseValue()
+	if err != nil {
+		return nil, err
+	}
+
+	pipe := p.Consume()
+
+	if pipe.Type != tokeniser.TOKEN_TYPE_PIPE {
+		return nil, p.FormatErrorAtToken("Expected pipe `|`", pipe.Start)
+	}
+
+	second, err := p.ParseValue()
+	if err != nil {
+		return nil, err
+	}
+
+	valueBool, err := condition.GetBool()
+	if err != nil {
+		return nil, err
+	}
+
+	if valueBool {
+		return first, nil
+	} else {
+		return second, nil
+	}
+}
+
 func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 	token := p.Consume()
 
@@ -244,6 +273,17 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 				}
 			}
 
+			possibleTilde := p.Peek()
+
+			if possibleTilde.Type == tokeniser.TOKEN_TYPE_TILDE {
+				if value.GetType() != PARSER_VALUE_TYPE_BOOL {
+					return nil, p.FormatErrorAtToken("Ternary operator `~` can only be used with boolean constants", possibleTilde.Start)
+				}
+
+				p.Increment()
+
+				return p.ParseTernaryExpression(value)
+			}
 			return value, nil
 		}
 
@@ -311,6 +351,14 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 			converted = false
 		} else {
 			return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to bool", token.Value), token.Start)
+		}
+
+		peeked := p.Peek()
+
+		if peeked.Type == tokeniser.TOKEN_TYPE_TILDE {
+			p.Increment()
+
+			return p.ParseTernaryExpression(&ParserValueBool{Value: converted})
 		}
 
 		return &ParserValueBool{Value: converted}, nil

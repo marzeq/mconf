@@ -19,6 +19,8 @@ const (
 	TOKEN_TYPE_COMMA          = "COMMA"
 	TOKEN_TYPE_DOT            = "DOT"
 	TOKEN_TYPE_QUESTION_MARK  = "QUESTION_MARK"
+	TOKEN_TYPE_TILDE          = "TILDE"
+	TOKEN_TYPE_PIPE           = "PIPE"
 	TOKEN_TYPE_OPEN_OBJ       = "OPEN_OBJ"
 	TOKEN_TYPE_CLOSE_OBJ      = "CLOSE_OBJ"
 	TOKEN_TYPE_DIRECTIVE      = "DIRECTIVE"
@@ -174,6 +176,22 @@ func DotToken(start Location) Token {
 func QuestionMarkToken(start Location) Token {
 	return Token{
 		Type:  TOKEN_TYPE_QUESTION_MARK,
+		Value: NO_VALUE,
+		Start: start,
+	}
+}
+
+func TildeToken(start Location) Token {
+	return Token{
+		Type:  TOKEN_TYPE_TILDE,
+		Value: NO_VALUE,
+		Start: start,
+	}
+}
+
+func PipeToken(start Location) Token {
+	return Token{
+		Type:  TOKEN_TYPE_PIPE,
 		Value: NO_VALUE,
 		Start: start,
 	}

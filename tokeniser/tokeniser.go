@@ -472,6 +472,10 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 				}
 
 				tokens = append(tokens, DirectiveToken(word, loc))
+			} else if c == '~' {
+				tokens = append(tokens, TildeToken(loc))
+			} else if c == '|' {
+				tokens = append(tokens, PipeToken(loc))
 			} else if c == '[' {
 				tokens = append(tokens, OpenListToken(loc))
 			} else if c == ']' {
