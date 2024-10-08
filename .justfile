@@ -2,14 +2,15 @@ default:
   @just --list
 
 builddir := "build"
+projname := "mconf"
 
 build:
   mkdir -p {{builddir}}
-  go build -o {{builddir}}/mconf .
+  go build -o {{builddir}}/{{projname}} .
 
 build-target OS ARCH:
   mkdir -p {{builddir}}
-  GOOS={{OS}} GOARCH={{ARCH}} go build -o {{builddir}}/mconf-{{OS}}-{{ARCH}}{{ if OS == "windows" { ".exe" } else { "" } }}
+  GOOS={{OS}} GOARCH={{ARCH}} go build -o {{builddir}}/{{projname}}-{{OS}}-{{ARCH}}{{ if OS == "windows" { ".exe" } else { "" } }}
 
 build-all: \
   (build-target "windows" "amd64") \
