@@ -55,6 +55,74 @@ func IsHexDigit(c rune) bool {
 	return IsAsciiDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
 }
 
+func (t *Tokeniser) ReadUnicodeEscape(backslashULoc Location) (rune, error) {
+	hc1 := t.Consume()
+	if !IsHexDigit(hc1) {
+		return 0, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u`, got `%c`", hc1), backslashULoc)
+	}
+	h1 := hexToDec(hc1)
+
+	hc2 := t.Consume()
+	if !IsHexDigit(hc2) {
+		return 0, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c`, got `%c`", hc1, hc2), backslashULoc)
+	}
+	h2 := hexToDec(hc2)
+
+	hc3 := t.Consume()
+	if !IsHexDigit(hc3) {
+		return 0, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c%c`, got `%c`", hc1, hc2, hc3), backslashULoc)
+	}
+	h3 := hexToDec(hc3)
+
+	hc4 := t.Consume()
+	if !IsHexDigit(hc4) {
+		return 0, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c%c%c`, got `%c`", hc1, hc2, hc3, hc4), backslashULoc)
+	}
+	h4 := hexToDec(hc4)
+
+	// may be a standalone code point or part of a surrogate pair
+	ch := h1*16*16*16 + h2*16*16 + h3*16 + h4
+
+	// check if a high surrogate [0xD800..0xDBFF]
+	if ch >= 0xD800 && ch <= 0xDBFF {
+		if t.Peek() == '\\' && t.PeekAhead(1) == 'u' {
+			t.Consume()
+			t.Consume()
+			lowSurrogate, err := t.ReadUnicodeEscape(backslashULoc)
+			if err != nil {
+				return 0, err
+			}
+
+			// ensure a valid low surrogate [0xDC00..0xDFFF]
+			if lowSurrogate < 0xDC00 || lowSurrogate > 0xDFFF {
+				// return null character if not a valid low surrogate rather than an error (it's their fault)
+				return 0, nil
+			}
+
+			// combine the surrogate pair into a single code point using documented formula
+			fullCodePoint := (ch-0xD800)*0x400 + (int(lowSurrogate) - 0xDC00) + 0x10000
+			return rune(fullCodePoint), nil
+		} else {
+			return rune(ch), nil // it's their fault they didn't provide a low surrogate
+		}
+	}
+
+	return rune(ch), nil
+}
+
+func hexToDec(hc rune) int {
+	if hc >= '0' && hc <= '9' {
+		return int(hc - '0')
+	}
+	if hc >= 'A' && hc <= 'F' {
+		return int(hc - 'A' + 10)
+	}
+	if hc >= 'a' && hc <= 'f' {
+		return int(hc - 'a' + 10)
+	}
+	return 0
+}
+
 func (t *Tokeniser) ReadString() ([]string, []string, error) {
 	strings := []string{""}
 
@@ -128,45 +196,27 @@ func (t *Tokeniser) ReadString() ([]string, []string, error) {
 				strings[len(strings)-1] += "\x1b"
 			// end source
 			case 'x':
-				// read two hex digits (one byte)
+				fallthrough
+			case 'X':
 				hc1 := t.Consume()
 				if !IsHexDigit(hc1) {
 					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\x`, got `%c`", hc1), nextloc)
 				}
-				h1 := hc1 - '0'
+				h1 := hexToDec(hc1)
 				hc2 := t.Consume()
 				if !IsHexDigit(hc2) {
 					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\x%c`, got `%c`", hc1, hc2), nextloc)
 				}
-				h2 := hc2 - '0'
-				ch := h1*16 + h2
-				strings[len(strings)-1] += string(ch)
+				h2 := hexToDec(hc2)
+				strings[len(strings)-1] += string(rune(h1*16 + h2))
 			case 'u':
 				fallthrough
 			case 'U':
-				// read four hex digits (two bytes aka one unicode code point)
-				hc1 := t.Consume()
-				if !IsHexDigit(hc1) {
-					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u`, got `%c`", hc1), nextloc)
+				unicodeChar, err := t.ReadUnicodeEscape(nextloc)
+				if err != nil {
+					return nil, nil, err
 				}
-				h1 := hc1 - '0'
-				hc2 := t.Consume()
-				if !IsHexDigit(hc2) {
-					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c`, got `%c`", hc1, hc2), nextloc)
-				}
-				h2 := hc2 - '0'
-				hc3 := t.Consume()
-				if !IsHexDigit(hc3) {
-					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c%c`, got `%c`", hc1, hc2, hc3), nextloc)
-				}
-				h3 := hc3 - '0'
-				hc4 := t.Consume()
-				if !IsHexDigit(hc4) {
-					return nil, nil, t.FormatErrorAt(fmt.Sprintf("Expected hex digit after `\\u%c%c%c`, got `%c`", hc1, hc2, hc3, hc4), nextloc)
-				}
-				h4 := hc4 - '0'
-				ch := h1*16*16*16 + h2*16*16 + h3*16 + h4
-				strings[len(strings)-1] += string(ch)
+				strings[len(strings)-1] += string(unicodeChar)
 			case '$':
 				strings[len(strings)-1] += "$"
 			default:
