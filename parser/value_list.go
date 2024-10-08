@@ -73,7 +73,7 @@ func (v *ParserValueList) ValueToString(indentAndDepth ...int) string {
 	}
 
 	if len(v.Value) == 0 {
-		return "{}"
+		return "[]"
 	}
 
 	noIndent := v.OneLineStringValue()

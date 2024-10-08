@@ -39,6 +39,7 @@ func ParseFromString(s string, rootDir string, rootFile string, relativeDir stri
 func ParseFromFile(filename string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
 	f, err := os.ReadFile(filename)
 	if err != nil {
+		err = fmt.Errorf("%s - Error reading file,%s", filename, strings.Split(err.Error(), ":")[1])
 		return nil, nil, err
 	}
 

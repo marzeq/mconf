@@ -441,7 +441,7 @@ func (p *Parser) ParseList() ([]ParserValue, error) {
 			}
 		default:
 			{
-				return nil, p.FormatErrorAtToken("Unexpected token", token.Start)
+				return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
 			}
 		}
 	}
@@ -689,6 +689,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 						f, err := os.ReadFile(fullFilePath)
 						if err != nil {
+							err = p.FormatErrorAtToken(fmt.Sprintf("error reading file %s,%s", relative, strings.Split(err.Error(), ":")[1]), ipToken.Start)
 							return nil, err
 						}
 
