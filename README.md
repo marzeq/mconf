@@ -29,9 +29,7 @@ see the [building & running](#building--running) section for more info
 
 ## editor support
 
-for now, there is only a tree-sitter parser for mconf, which you can find [here](https://github.com/marzeq/tree-sitter-mconf). if you know how to make a syntax highlighter for your editor, you can use this to make one.
-
-for neovim, i suggest you look at my [dotfiles](https://github.com/marzeq/dotfiles) (specifically [here](https://github.com/marzeq/dotfiles/tree/dev/nvim/.config/nvim/after/queries/mconf) and [here](https://github.com/marzeq/dotfiles/blob/dev/nvim/.config/nvim/lua/plugins/treesitter.lua)) to see how i setup a custom tree-sitter parser
+see [editors.md](./editors.md) for more info
 
 ## building & running
 
