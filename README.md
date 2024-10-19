@@ -1,10 +1,12 @@
 # mconf
 
-## why?
+## what and why?
 
-this was originally made as a recreational programming exercise and a way to learn more about tokenisation and parsing
+to start - i am a big fan of the general idea of yaml, the easy-to-read nature of it is very appealing to me. however, it has many obvious pitfalls like a (somewhat) undefined syntax with multiple ways to do the same thing, no official standard, and the glaring issue that it's indentation based
 
-as i was working on it, it grew on me that i actually prefer the syntax of it over any other 
+so, i decided to make my own one that is more strict and has a more defined syntax while still being easy to read, avoiding the problems of yaml, while adding some creature comforts 
+
+it was originally made as a recreational programming exercise and a way to learn more about tokenisation and parsing, however, i decided to flesh it out a bit more to make it more usable
 
 ## getting the binary
 
