@@ -12,6 +12,7 @@ world"
 with_escapes = "\"hello\nworld\""
 emojis_and_unicode = "😊 こんにちは！"
 formatted_string = "${USER}'s home directory is ${HOME}" # unlike bash, {}'s ARE required
+single_quotes = 'foo bar'
 
 number = 123
 negative_number = -123

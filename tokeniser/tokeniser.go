@@ -131,8 +131,8 @@ func (t *Tokeniser) ReadString() ([]string, []string, error) {
 
 	constantSubs := []string{}
 
-	if initial != '"' {
-		return nil, nil, t.FormatErrorAt("Expected `\"` to start string", loc)
+	if initial != '"' && initial != '\'' {
+		return nil, nil, t.FormatErrorAt("Expected `\"` or `'` to start a string", loc)
 	}
 
 	for {
@@ -491,7 +491,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			}
 
 			tokens = append(tokens, NumberToken(number, mode, loc))
-		} else if c == '"' {
+		} else if c == '"' || c == '\'' {
 			parsed, constantSubs, error := t.ReadString()
 
 			if error != nil {

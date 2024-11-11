@@ -104,6 +104,7 @@ multiline_str = "123
 456"
 escapes = "\"escaped quotes\""
 unicode = "😊"
+single_quotes = 'single quotes'
 ```
 
 #### formatted strings
