@@ -316,7 +316,7 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 
 		return &ParserValueString{Value: sb}, nil
 	case tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
-		if strings.Contains(token.Value, ".") {
+		if strings.Contains(token.Value, ".") || strings.Contains(token.Value, "e") || strings.Contains(token.Value, "E") {
 			bigFl, _, err := big.ParseFloat(token.Value, 10, 0, big.ToNearestEven)
 			if err != nil {
 				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to float", token.Value), token.Start)
