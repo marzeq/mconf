@@ -12,6 +12,11 @@ import (
 	"github.com/marzeq/mconf/tokeniser"
 )
 
+const (
+	VERSION  = "1.1.0"
+	PROGNAME = "mconf"
+)
+
 func check(err error) {
 	if err != nil {
 		fmt.Println(err)
@@ -95,7 +100,9 @@ type options struct {
 	EnvFile           string
 }
 
-func usage(progname string) string {
+func usage() string {
+	progname := filepath.Base(os.Args[0])
+
 	return fmt.Sprintf(`Usage:
   %s <filename> [-- property1 property2 ...]
 
@@ -117,7 +124,7 @@ Examples:
 }
 
 func version() string {
-	return "mconf version 1.0.0"
+	return fmt.Sprintf("%s version %s", PROGNAME, VERSION)
 }
 
 func parseOptions() (options, string, uint) {
@@ -128,10 +135,8 @@ func parseOptions() (options, string, uint) {
 
 	args := os.Args[1:]
 
-	binname := filepath.Base(os.Args[0])
-
 	if len(args) == 0 {
-		return opts, usage(binname), 1
+		return opts, usage(), 1
 	}
 
 	i := 0
@@ -164,7 +169,7 @@ func parseOptions() (options, string, uint) {
 					opts.AcessedProperties = args[i+1:]
 					break
 				} else if arg == "--help" {
-					return opts, usage(binname), 0
+					return opts, usage(), 0
 				} else if arg == "--version" {
 					return opts, version(), 0
 				} else if arg == "--json" {
@@ -185,7 +190,7 @@ func parseOptions() (options, string, uint) {
 				for _, c := range arg[1:] {
 					switch c {
 					case 'h':
-						return opts, usage(binname), 0
+						return opts, usage(), 0
 					case 'v':
 						return opts, version(), 0
 					case 'j':

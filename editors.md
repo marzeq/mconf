@@ -34,7 +34,7 @@ return {
 }
 ```
 
-i don't know how to make a different plugin manager, so you're on your own on that one (but it should be easy to adapt)
+i don't know how to make it work for a different plugin manager, so you're on your own on that one (but it should be easy to adapt)
 
 ## emacs
 
