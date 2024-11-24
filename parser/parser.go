@@ -167,28 +167,6 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) erro
 	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Parser error: %s", prettyFile, loc.Line, loc.Col, message))
 }
 
-func (p *Parser) ParseDeepKey() ([]string, error) {
-	key := make([]string, 0)
-
-	for {
-		token := p.Consume()
-
-		if token.Type == tokeniser.TOKEN_TYPE_KEY || token.Type == tokeniser.TOKEN_TYPE_STRING {
-			key = append(key, token.Value)
-		}
-
-		next := p.Peek()
-
-		if next.Type == tokeniser.TOKEN_TYPE_DOT {
-			p.Increment()
-		} else {
-			break
-		}
-	}
-
-	return key, nil
-}
-
 func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 	sb := ""
 	for i, v := range token.Values {
@@ -504,7 +482,7 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 	return object, nil
 }
 
-func (p *Parser) SmartlySetValuesAndConstants(importEverything bool, importPaths [][]string, importConstants []string, ic importCacheEntry, errorLoc tokeniser.Location, importPath string) error {
+func (p *Parser) SetValuesAndConstantsAfterImport(importEverything bool, importKeys []string, importConstants []string, ic importCacheEntry, errorLoc tokeniser.Location, importPath string) error {
 	if importEverything {
 		for k, v := range ic.values {
 			p.GetValues()[k] = v
@@ -514,26 +492,11 @@ func (p *Parser) SmartlySetValuesAndConstants(importEverything bool, importPaths
 			p.GetConstants()[k] = v
 		}
 	} else {
-		for _, path := range importPaths {
-			current := ic.values
-
-			for i, key := range path {
-				indexedVal, ok := current[key]
-				if !ok {
-					joinedPath := strings.Join(path[:i+1], ".")
-					return p.FormatErrorAtToken(fmt.Sprintf("Path `%s` not found in imported file %s", joinedPath, importPath), errorLoc)
+		for _, key := range importKeys {
+			for k, v := range ic.values {
+				if key == k {
+					p.GetValues()[k] = v
 				}
-
-				if i == len(path)-1 {
-					p.GetValues()[key] = indexedVal
-					break
-				}
-
-				got, err := indexedVal.GetObject()
-				if err != nil {
-					return p.FormatErrorAtToken(fmt.Sprintf("Path `%s` in imported file %s is not an object", strings.Join(path[:i+1], "."), importPath), errorLoc)
-				}
-				current = got
 			}
 		}
 
@@ -621,7 +584,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 					{
 						nextUnknown := p.Peek()
 
-						importPaths := [][]string{}
+						importKeys := []string{}
 						importConstants := []string{}
 						importEverything := true
 
@@ -639,13 +602,9 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 								if tok.Type == tokeniser.TOKEN_TYPE_CONSTANT {
 									p.Increment()
 									importConstants = append(importConstants, tok.Value)
-								} else {
-									key, err := p.ParseDeepKey()
-									if err != nil {
-										return nil, err
-									}
-
-									importPaths = append(importPaths, key)
+								} else if tok.Type == tokeniser.TOKEN_TYPE_KEY || tok.Type == tokeniser.TOKEN_TYPE_STRING {
+									p.Increment()
+									importKeys = append(importKeys, tok.Value)
 								}
 
 								comma_or_close := p.Peek()
@@ -680,7 +639,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 						ic, icOk := (*p.importCache)[fullFilePath]
 
 						if icOk {
-							err := p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, ipToken.Start, importPath)
+							err := p.SetValuesAndConstantsAfterImport(importEverything, importKeys, importConstants, ic, ipToken.Start, importPath)
 							if err != nil {
 								return nil, err
 							}
@@ -713,7 +672,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 							return nil, fmt.Errorf("Unreachable code reached, please report this as a bug")
 						}
 
-						err = p.SmartlySetValuesAndConstants(importEverything, importPaths, importConstants, ic, ipToken.Start, importPath)
+						err = p.SetValuesAndConstantsAfterImport(importEverything, importKeys, importConstants, ic, ipToken.Start, importPath)
 						if err != nil {
 							return nil, err
 						}

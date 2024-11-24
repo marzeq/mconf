@@ -304,7 +304,7 @@ you can specify exactly what you want to import from a file
 
 `a.mconf`:
 ```mconf
-@import { foo, $bar, baz.bar } "b.mconf"
+@import { foo, $bar } "b.mconf"
 a = $bar
 ```
 
@@ -312,15 +312,11 @@ a = $bar
 ```mconf
 foo = 123
 $bar = 456
-baz = {
-  bar = 789
-}
 ```
 
 will result in:
 ```mconf
 foo = 123
-bar = 789
 a = 456
 ```
 

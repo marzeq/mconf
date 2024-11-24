@@ -16,11 +16,12 @@ using lazy:
 return {
   {
     "marzeq/tree-sitter-mconf",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
     config = function()
       local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
       parser_config.mconf = {
         install_info = {
-          -- i know this is a bit hacky, but it's the best way to avoid duplicating the download
+          -- this is a bit hacky, but it's the best way to avoid duplicating the download
           url = "~/.local/share/nvim/lazy/tree-sitter-mconf",
           files = { "src/parser.c" },
         },
@@ -28,6 +29,13 @@ return {
 
       vim.filetype.add({
         pattern = { [".*%.mconf"] = "mconf" },
+      })
+
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "mconf",
+        callback = function()
+          vim.api.nvim_command("set commentstring=#\\ %s")
+        end,
       })
     end,
   },

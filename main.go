@@ -119,8 +119,8 @@ Options:
   -c, --constants   Show constants (only displayed when no properties are provided)
 
 Examples:
-  %s config.mconf -- property1 property2
-  cat config.mconf | %s - -- property1 property2`, progname, progname, progname)
+  %s config.mconf -- property1 1 
+  cat config.mconf | %s - -- property1 1`, progname, progname, progname)
 }
 
 func version() string {
@@ -266,7 +266,9 @@ func main() {
 				os.Exit(1)
 			}
 
-			if parts[1][0] == '"' && parts[1][len(parts[1])-1] == '"' {
+			if parts[1][0] == '"' && parts[1][len(parts[1])-1] == '"' ||
+				parts[1][0] == '\'' && parts[1][len(parts[1])-1] == '\'' {
+
 				parts[1] = parts[1][1 : len(parts[1])-1]
 				parts[1] = strings.ReplaceAll(parts[1], "\\n", "\n")
 				parts[1] = strings.ReplaceAll(parts[1], "\\r", "\r")
@@ -310,7 +312,7 @@ func main() {
 		if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_OBJECT {
 			obj, err := indexedValue.GetObject()
 			if err != nil {
-				fmt.Printf("Unexpected error, indexed value has type object but cannot be converted to object, please report this bug\n")
+				fmt.Printf("Unexpected error, indexed value has type object but cannot be converted to object\n")
 				os.Exit(1)
 			}
 
@@ -325,7 +327,7 @@ func main() {
 		} else {
 			list, err := indexedValue.GetList()
 			if err != nil {
-				fmt.Printf("Unexpected error, indexed value has type list but cannot be converted to list, please report this bug\n")
+				fmt.Printf("Unexpected error, indexed value has type list but cannot be converted to list\n")
 				os.Exit(1)
 			}
 
@@ -357,7 +359,7 @@ func main() {
 		cast, ok := indexedValue.(*parser.ParserValueString)
 
 		if !ok {
-			fmt.Printf("Unexpected error, indexed value has type string but cannot be cast to string, please report this bug\n")
+			fmt.Printf("Unexpected error, indexed value has type string but cannot be cast to string\n")
 			os.Exit(1)
 		}
 
