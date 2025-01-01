@@ -245,7 +245,7 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	for {
 		next := t.Peek()
 
-		if IsLegalWordStart(next) || (IsAsciiDigit(next) && len(word) > 0) {
+		if IsLegalWordStart(next) || ((IsAsciiDigit(next) || next == '-') && len(word) > 0) {
 			word += string(next)
 			t.Increment()
 		} else {
@@ -430,7 +430,7 @@ func IsLegalWord(cs []rune) bool {
 			return false
 		}
 
-		if !IsLegalWordStart(c) && !IsAsciiDigit(c) {
+		if !IsLegalWordStart(c) && !IsAsciiDigit(c) && c != '-' {
 			return false
 		}
 	}
