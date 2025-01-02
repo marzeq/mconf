@@ -12,7 +12,7 @@ func (v *ParserValueNull) IsNull() bool {
 	return true
 }
 
-func (v *ParserValueNull) GetType() string {
+func (v *ParserValueNull) GetType() ValueType {
 	return PARSER_VALUE_TYPE_NULL
 }
 

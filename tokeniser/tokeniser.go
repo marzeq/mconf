@@ -2,7 +2,6 @@ package tokeniser
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"unicode"
 )
@@ -256,12 +255,12 @@ func (t *Tokeniser) ReadWord() (string, error) {
 	return word, nil
 }
 
-func (t *Tokeniser) ReadNumber() (string, string, error) {
+func (t *Tokeniser) ReadNumber() (string, TokenType, error) {
 	loc := t.GetCurrLineAndCol()
 	initial := t.Consume()
 
 	if !IsAsciiDigit(initial) && initial != '-' && initial != '.' {
-		return "", "", t.FormatErrorAt("Expected digit to start a number", loc)
+		return "", 0, t.FormatErrorAt("Expected digit to start a number", loc)
 	}
 
 	number := string(initial)
@@ -270,7 +269,7 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 		number = "0."
 	}
 
-	var mode string
+	var mode TokenType
 
 	if initial == '-' {
 		number = "-"
@@ -313,7 +312,7 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 
 				next = t.Peek()
 				if !unicode.IsDigit(next) {
-					return "", "", t.FormatError(fmt.Sprintf("Expected digit after exponent in decimal number, got `%c`", next))
+					return "", 0, t.FormatError(fmt.Sprintf("Expected digit after exponent in decimal number, got `%c`", next))
 				}
 
 				number += string(next)
@@ -321,7 +320,7 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 			} else if next == '_' {
 				t.Increment()
 			} else if unicode.IsLetter(next) {
-				return "", "", t.FormatError(fmt.Sprintf("Unexpected character in decimal number: `%c`", next))
+				return "", 0, t.FormatError(fmt.Sprintf("Unexpected character in decimal number: `%c`", next))
 			} else {
 				break
 			}
@@ -332,7 +331,7 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 			} else if next == '_' {
 				t.Increment()
 			} else if unicode.IsLetter(next) {
-				return "", "", t.FormatError(fmt.Sprintf("Unexpected character in hex number: `%c`", next))
+				return "", 0, t.FormatError(fmt.Sprintf("Unexpected character in hex number: `%c`", next))
 			} else {
 				break
 			}
@@ -343,12 +342,12 @@ func (t *Tokeniser) ReadNumber() (string, string, error) {
 			} else if next == '_' {
 				t.Increment()
 			} else if unicode.IsLetter(next) {
-				return "", "", t.FormatError(fmt.Sprintf("Unexpected character in binary number: `%c`", next))
+				return "", 0, t.FormatError(fmt.Sprintf("Unexpected character in binary number: `%c`", next))
 			} else {
 				break
 			}
 		} else {
-			return "", "", t.FormatError(fmt.Sprintf("Unreachable code reached, this is a bug, please report it"))
+			return "", 0, t.FormatError(fmt.Sprintf("Unreachable code reached, this is a bug, please report it"))
 		}
 	}
 
@@ -541,8 +540,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			} else if unicode.IsSpace(c) {
 				continue
 			} else {
-				fmt.Println(t.FormatErrorAt(fmt.Sprintf("Unexpected character: `%c`", c), loc))
-				os.Exit(1)
+				return nil, t.FormatErrorAt(fmt.Sprintf("Unexpected character: `%c`", c), loc)
 			}
 		}
 	}

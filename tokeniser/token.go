@@ -4,29 +4,77 @@ import (
 	"fmt"
 )
 
-const (
-	TOKEN_TYPE_KEY            = "KEY"
-	TOKEN_TYPE_CONSTANT       = "CONSTANT"
-	TOKEN_TYPE_ASSIGN         = "ASSIGN"
-	TOKEN_TYPE_NUMBER_DECIMAL = "NUMBER_DECIMAL"
-	TOKEN_TYPE_NUMBER_HEX     = "NUMBER_HEX"
-	TOKEN_TYPE_NUMBER_BINARY  = "NUMBER_BINARY"
-	TOKEN_TYPE_STRING         = "STRING"
-	TOKEN_TYPE_BOOL           = "BOOL"
-	TOKEN_TYPE_NULL           = "NULL"
-	TOKEN_TYPE_OPEN_LIST      = "OPEN_LIST"
-	TOKEN_TYPE_CLOSE_LIST     = "CLOSE_LIST"
-	TOKEN_TYPE_COMMA          = "COMMA"
-	TOKEN_TYPE_DOT            = "DOT"
-	TOKEN_TYPE_QUESTION_MARK  = "QUESTION_MARK"
-	TOKEN_TYPE_TILDE          = "TILDE"
-	TOKEN_TYPE_PIPE           = "PIPE"
-	TOKEN_TYPE_OPEN_OBJ       = "OPEN_OBJ"
-	TOKEN_TYPE_CLOSE_OBJ      = "CLOSE_OBJ"
-	TOKEN_TYPE_DIRECTIVE      = "DIRECTIVE"
+type TokenType int
 
-	TOKEN_TYPE_EOF = "EOF"
+const (
+	TOKEN_TYPE_KEY TokenType = iota
+	TOKEN_TYPE_CONSTANT
+	TOKEN_TYPE_ASSIGN
+	TOKEN_TYPE_NUMBER_DECIMAL
+	TOKEN_TYPE_NUMBER_HEX
+	TOKEN_TYPE_NUMBER_BINARY
+	TOKEN_TYPE_STRING
+	TOKEN_TYPE_BOOL
+	TOKEN_TYPE_NULL
+	TOKEN_TYPE_OPEN_LIST
+	TOKEN_TYPE_CLOSE_LIST
+	TOKEN_TYPE_COMMA
+	TOKEN_TYPE_DOT
+	TOKEN_TYPE_QUESTION_MARK
+	TOKEN_TYPE_TILDE
+	TOKEN_TYPE_PIPE
+	TOKEN_TYPE_OPEN_OBJ
+	TOKEN_TYPE_CLOSE_OBJ
+	TOKEN_TYPE_DIRECTIVE
+	TOKEN_TYPE_EOF
 )
+
+func (tt TokenType) String() string {
+	switch tt {
+	case TOKEN_TYPE_KEY:
+		return "KEY"
+	case TOKEN_TYPE_CONSTANT:
+		return "CONSTANT"
+	case TOKEN_TYPE_ASSIGN:
+		return "ASSIGN"
+	case TOKEN_TYPE_NUMBER_DECIMAL:
+		return "NUMBER_DECIMAL"
+	case TOKEN_TYPE_NUMBER_HEX:
+		return "NUMBER_HEX"
+	case TOKEN_TYPE_NUMBER_BINARY:
+		return "NUMBER_BINARY"
+	case TOKEN_TYPE_STRING:
+		return "STRING"
+	case TOKEN_TYPE_BOOL:
+		return "BOOL"
+	case TOKEN_TYPE_NULL:
+		return "NULL"
+	case TOKEN_TYPE_OPEN_LIST:
+		return "OPEN_LIST"
+	case TOKEN_TYPE_CLOSE_LIST:
+		return "CLOSE_LIST"
+	case TOKEN_TYPE_COMMA:
+		return "COMMA"
+	case TOKEN_TYPE_DOT:
+		return "DOT"
+	case TOKEN_TYPE_QUESTION_MARK:
+		return "QUESTION_MARK"
+	case TOKEN_TYPE_TILDE:
+		return "TILDE"
+	case TOKEN_TYPE_PIPE:
+		return "PIPE"
+	case TOKEN_TYPE_OPEN_OBJ:
+		return "OPEN_OBJ"
+	case TOKEN_TYPE_CLOSE_OBJ:
+		return "CLOSE_OBJ"
+	case TOKEN_TYPE_DIRECTIVE:
+		return "DIRECTIVE"
+	case TOKEN_TYPE_EOF:
+		return "EOF"
+	}
+
+	panic("token type with no correspoding string value")
+}
 
 const (
 	NO_VALUE = "NO_VALUE"
@@ -37,30 +85,30 @@ type Location struct {
 	Col  int
 }
 
-func (l Location) Repr() string {
+func (l Location) String() string {
 	return fmt.Sprintf("Location{Line: %d, Col: %d}", l.Line, l.Col)
 }
 
 type Token struct {
-	Type       string
+	Type       TokenType
 	Value      string
 	Values     []string
 	StringSubs []string
 	Start      Location
 }
 
-func (t Token) Repr() string {
+func (t Token) String() string {
 	if t.Value == NO_VALUE {
 		return fmt.Sprintf(`Token{
   Type: %s,
   Location: %s
-}`, t.Type, t.Start.Repr())
+}`, t.Type, t.Start)
 	}
 	return fmt.Sprintf(`Token{
   Type: %s,
   Value: %s,
   Location: %s
-}`, t.Type, t.Value, t.Start.Repr())
+}`, t.Type, t.Value, t.Start)
 }
 
 func KeyToken(value string, start Location) Token {
@@ -87,7 +135,7 @@ func AssignToken(start Location) Token {
 	}
 }
 
-func NumberToken(value string, numtype string, start Location) Token {
+func NumberToken(value string, numtype TokenType, start Location) Token {
 	switch numtype {
 	case TOKEN_TYPE_NUMBER_DECIMAL:
 		return Token{

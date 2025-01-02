@@ -8,7 +8,7 @@ type ParserValueFloat struct {
 	Value *big.Float
 }
 
-func (v *ParserValueFloat) GetType() string {
+func (v *ParserValueFloat) GetType() ValueType {
 	return PARSER_VALUE_TYPE_FLOAT
 }
 

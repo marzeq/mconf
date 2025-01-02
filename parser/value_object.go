@@ -12,7 +12,7 @@ type ParserValueObject struct {
 	Value map[string]ParserValue
 }
 
-func (v *ParserValueObject) GetType() string {
+func (v *ParserValueObject) GetType() ValueType {
 	return PARSER_VALUE_TYPE_OBJECT
 }
 

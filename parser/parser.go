@@ -11,18 +11,20 @@ import (
 	"github.com/marzeq/mconf/tokeniser"
 )
 
+type ValueType int
+
 const (
-	PARSER_VALUE_TYPE_STRING = "STRING"
-	PARSER_VALUE_TYPE_FLOAT  = "FLOAT"
-	PARSER_VALUE_TYPE_INT    = "INT"
-	PARSER_VALUE_TYPE_BOOL   = "BOOL"
-	PARSER_VALUE_TYPE_NULL   = "NULL"
-	PARSER_VALUE_TYPE_LIST   = "LIST"
-	PARSER_VALUE_TYPE_OBJECT = "OBJECT"
+	PARSER_VALUE_TYPE_STRING ValueType = iota
+	PARSER_VALUE_TYPE_FLOAT
+	PARSER_VALUE_TYPE_INT
+	PARSER_VALUE_TYPE_BOOL
+	PARSER_VALUE_TYPE_NULL
+	PARSER_VALUE_TYPE_LIST
+	PARSER_VALUE_TYPE_OBJECT
 )
 
 type ParserValue interface {
-	GetType() string
+	GetType() ValueType
 
 	ValueToString(indentAndDepth ...int) string
 	ToJSONString() string

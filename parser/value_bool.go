@@ -9,7 +9,7 @@ type ParserValueBool struct {
 	Value bool
 }
 
-func (v *ParserValueBool) GetType() string {
+func (v *ParserValueBool) GetType() ValueType {
 	return PARSER_VALUE_TYPE_BOOL
 }
 

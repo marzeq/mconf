@@ -10,7 +10,7 @@ type ParserValueList struct {
 	Value []ParserValue
 }
 
-func (v *ParserValueList) GetType() string {
+func (v *ParserValueList) GetType() ValueType {
 	return PARSER_VALUE_TYPE_LIST
 }
 

@@ -8,7 +8,7 @@ type ParserValueInt struct {
 	Value *big.Int
 }
 
-func (v *ParserValueInt) GetType() string {
+func (v *ParserValueInt) GetType() ValueType {
 	return PARSER_VALUE_TYPE_INT
 }
 

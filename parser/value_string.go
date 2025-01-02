@@ -9,7 +9,7 @@ type ParserValueString struct {
 	Value string
 }
 
-func (v *ParserValueString) GetType() string {
+func (v *ParserValueString) GetType() ValueType {
 	return PARSER_VALUE_TYPE_STRING
 }
 
