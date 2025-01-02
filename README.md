@@ -100,6 +100,8 @@ if a key is defined many times, the last one will shadow the previous ones
 
 ```mconf
 a_str = "bar"
+no_quotes = bar
+no_quotes2 = foo bar baz # illegal, no quotes only allowed if it's one word
 multiline_str = "123
 456"
 escapes = "\"escaped quotes\""

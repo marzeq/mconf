@@ -7,7 +7,7 @@ import (
 type TokenType int
 
 const (
-	TOKEN_TYPE_KEY TokenType = iota
+	TOKEN_TYPE_WORD TokenType = iota
 	TOKEN_TYPE_CONSTANT
 	TOKEN_TYPE_ASSIGN
 	TOKEN_TYPE_NUMBER_DECIMAL
@@ -31,8 +31,8 @@ const (
 
 func (tt TokenType) String() string {
 	switch tt {
-	case TOKEN_TYPE_KEY:
-		return "KEY"
+	case TOKEN_TYPE_WORD:
+		return "WORD"
 	case TOKEN_TYPE_CONSTANT:
 		return "CONSTANT"
 	case TOKEN_TYPE_ASSIGN:
@@ -111,9 +111,9 @@ func (t Token) String() string {
 }`, t.Type, t.Value, t.Start)
 }
 
-func KeyToken(value string, start Location) Token {
+func WordToken(value string, start Location) Token {
 	return Token{
-		Type:  TOKEN_TYPE_KEY,
+		Type:  TOKEN_TYPE_WORD,
 		Value: value,
 		Start: start,
 	}

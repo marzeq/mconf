@@ -288,6 +288,8 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 	token := p.Consume()
 
 	switch token.Type {
+	case tokeniser.TOKEN_TYPE_WORD:
+		return &ParserValueString{Value: token.Value}, nil
 	case tokeniser.TOKEN_TYPE_STRING:
 		sb, err := p.EvaluateStringValue(token)
 		if err != nil {
@@ -438,13 +440,13 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 		switch token.Type {
 		case tokeniser.TOKEN_TYPE_CLOSE_OBJ:
 			return object, nil
-		case tokeniser.TOKEN_TYPE_KEY:
+		case tokeniser.TOKEN_TYPE_WORD:
 			fallthrough
 		case tokeniser.TOKEN_TYPE_STRING:
 			{
 				var key string
 
-				if token.Type == tokeniser.TOKEN_TYPE_KEY {
+				if token.Type == tokeniser.TOKEN_TYPE_WORD {
 					key = token.Value
 				} else {
 					evkey, err := p.EvaluateStringValue(token)
@@ -521,13 +523,13 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 		switch token.Type {
 		case tokeniser.TOKEN_TYPE_EOF:
 			return p.GetValues(), nil
-		case tokeniser.TOKEN_TYPE_KEY:
+		case tokeniser.TOKEN_TYPE_WORD:
 			fallthrough
 		case tokeniser.TOKEN_TYPE_STRING:
 			{
 				var key string
 
-				if token.Type == tokeniser.TOKEN_TYPE_KEY {
+				if token.Type == tokeniser.TOKEN_TYPE_WORD {
 					key = token.Value
 				} else {
 					evkey, err := p.EvaluateStringValue(token)
@@ -604,7 +606,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 								if tok.Type == tokeniser.TOKEN_TYPE_CONSTANT {
 									p.Increment()
 									importConstants = append(importConstants, tok.Value)
-								} else if tok.Type == tokeniser.TOKEN_TYPE_KEY || tok.Type == tokeniser.TOKEN_TYPE_STRING {
+								} else if tok.Type == tokeniser.TOKEN_TYPE_WORD || tok.Type == tokeniser.TOKEN_TYPE_STRING {
 									p.Increment()
 									importKeys = append(importKeys, tok.Value)
 								}

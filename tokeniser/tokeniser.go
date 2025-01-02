@@ -466,7 +466,7 @@ func (t *Tokeniser) Tokenise() ([]Token, error) {
 			} else if word == "null" {
 				tokens = append(tokens, NullToken(loc))
 			} else {
-				tokens = append(tokens, KeyToken(word, loc))
+				tokens = append(tokens, WordToken(word, loc))
 
 				for {
 					next := t.Peek()
