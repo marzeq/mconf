@@ -1,4 +1,4 @@
-package parser
+package mconf_parser
 
 import (
 	"fmt"
@@ -8,23 +8,19 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/marzeq/mconf/tokeniser"
+	"github.com/marzeq/mconf/mconf_tokeniser"
+	"github.com/marzeq/mconf/mconf_values"
 )
 
 type ValueType int
 
-type ParserValue interface {
-	ValueToString(indentAndDepth ...int) string
-	ToJSONString() string
-}
-
 type importCacheEntry struct {
-	values    map[string]ParserValue
-	constants map[string]ParserValue
+	values    map[string]mconf_values.MconfValue
+	constants map[string]mconf_values.MconfValue
 }
 
 type Parser struct {
-	tokens      []tokeniser.Token
+	tokens      []mconf_tokeniser.Token
 	currIndex   int
 	rootDir     string
 	relativeDir string
@@ -32,14 +28,14 @@ type Parser struct {
 	importCache *map[string]importCacheEntry
 }
 
-func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string, relativeDir string) Parser {
+func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile string, relativeDir string) Parser {
 	importCache := make(map[string]importCacheEntry)
 
 	fullFile := filepath.Join(rootDir, currentFile)
 
 	importCache[fullFile] = importCacheEntry{
-		values:    make(map[string]ParserValue),
-		constants: make(map[string]ParserValue),
+		values:    make(map[string]mconf_values.MconfValue),
+		constants: make(map[string]mconf_values.MconfValue),
 	}
 
 	return Parser{
@@ -52,12 +48,12 @@ func NewParser(tokens []tokeniser.Token, rootDir string, currentFile string, rel
 	}
 }
 
-func (p *Parser) childParser(tokens []tokeniser.Token, currentFile string) Parser {
+func (p *Parser) childParser(tokens []mconf_tokeniser.Token, currentFile string) Parser {
 	fullFile := filepath.Join(p.rootDir, currentFile)
 
 	(*p.importCache)[fullFile] = importCacheEntry{
-		values:    make(map[string]ParserValue),
-		constants: make(map[string]ParserValue),
+		values:    make(map[string]mconf_values.MconfValue),
+		constants: make(map[string]mconf_values.MconfValue),
 	}
 
 	return Parser{
@@ -69,26 +65,26 @@ func (p *Parser) childParser(tokens []tokeniser.Token, currentFile string) Parse
 	}
 }
 
-func (p *Parser) GetValues() map[string]ParserValue {
+func (p *Parser) GetValues() map[string]mconf_values.MconfValue {
 	return (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)].values
 }
 
-func (p *Parser) GetConstants() map[string]ParserValue {
+func (p *Parser) GetConstants() map[string]mconf_values.MconfValue {
 	return (*p.importCache)[filepath.Join(p.rootDir, p.currentFile)].constants
 }
 
-func GetEnv() map[string]ParserValue {
-	env := make(map[string]ParserValue)
+func GetEnv() map[string]mconf_values.MconfValue {
+	env := make(map[string]mconf_values.MconfValue)
 
 	for _, e := range os.Environ() {
 		pair := strings.SplitN(e, "=", 2)
-		env[pair[0]] = &ParserValueString{Value: pair[1]}
+		env[pair[0]] = &mconf_values.MconfString{Value: pair[1]}
 	}
 
 	return env
 }
 
-func (p *Parser) GetConstant(name string) (ParserValue, bool) {
+func (p *Parser) GetConstant(name string) (mconf_values.MconfValue, bool) {
 	value, ok := p.GetConstants()[name]
 
 	if ok {
@@ -104,15 +100,15 @@ func (p *Parser) GetConstant(name string) (ParserValue, bool) {
 	return nil, false
 }
 
-func (p *Parser) PeekAhead(i int) tokeniser.Token {
+func (p *Parser) PeekAhead(i int) mconf_tokeniser.Token {
 	if p.currIndex+i >= len(p.tokens) {
-		return tokeniser.EOFToken()
+		return mconf_tokeniser.EOFToken()
 	}
 
 	return p.tokens[p.currIndex+i]
 }
 
-func (p *Parser) Peek() tokeniser.Token {
+func (p *Parser) Peek() mconf_tokeniser.Token {
 	return p.PeekAhead(0)
 }
 
@@ -120,7 +116,7 @@ func (p *Parser) Increment() {
 	p.currIndex++
 }
 
-func (p *Parser) Consume() tokeniser.Token {
+func (p *Parser) Consume() mconf_tokeniser.Token {
 	t := p.Peek()
 
 	p.Increment()
@@ -132,7 +128,7 @@ func (p *Parser) GoBack() {
 	p.currIndex--
 }
 
-func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) error {
+func (p *Parser) FormatErrorAtToken(message string, loc mconf_tokeniser.Location) error {
 	var prettyFile string
 
 	if p.currentFile == "" {
@@ -148,7 +144,7 @@ func (p *Parser) FormatErrorAtToken(message string, loc tokeniser.Location) erro
 	return fmt.Errorf(fmt.Sprintf("%s:%d:%d - Parser error: %s", prettyFile, loc.Line, loc.Col, message))
 }
 
-func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
+func (p *Parser) EvaluateStringValue(token mconf_tokeniser.Token) (string, error) {
 	sb := ""
 	for i, v := range token.Values {
 		sb += v
@@ -161,8 +157,8 @@ func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 			}
 
 			switch constantValue.(type) {
-			case *ParserValueString:
-				constantStr := constantValue.(*ParserValueString).Value
+			case *mconf_values.MconfString:
+				constantStr := constantValue.(*mconf_values.MconfString).Value
 				sb += constantStr
 			default:
 				sb += constantValue.ValueToString()
@@ -173,7 +169,7 @@ func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 	return sb, nil
 }
 
-func (p *Parser) ParseTernaryExpression(condition ParserValue) (ParserValue, error) {
+func (p *Parser) ParseTernaryExpression(condition mconf_values.MconfValue) (mconf_values.MconfValue, error) {
 	first, err := p.ParseValue()
 	if err != nil {
 		return nil, err
@@ -181,7 +177,7 @@ func (p *Parser) ParseTernaryExpression(condition ParserValue) (ParserValue, err
 
 	pipe := p.Consume()
 
-	if pipe.Type != tokeniser.TOKEN_TYPE_PIPE {
+	if pipe.Type != mconf_tokeniser.TOKEN_TYPE_PIPE {
 		return nil, p.FormatErrorAtToken("Expected pipe `|`", pipe.Start)
 	}
 
@@ -192,8 +188,8 @@ func (p *Parser) ParseTernaryExpression(condition ParserValue) (ParserValue, err
 
 	valueBool := false
 	switch condition.(type) {
-	case *ParserValueBool:
-		valueBool = condition.(*ParserValueBool).Value
+	case *mconf_values.MconfBool:
+		valueBool = condition.(*mconf_values.MconfBool).Value
 	default:
 		return nil, p.FormatErrorAtToken("Ternary operator `~` can only be used with boolean constants", pipe.Start)
 	}
@@ -205,22 +201,22 @@ func (p *Parser) ParseTernaryExpression(condition ParserValue) (ParserValue, err
 	}
 }
 
-func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
+func (p *Parser) ParseConstantWithBackup() (mconf_values.MconfValue, error) {
 	token := p.Consume()
 
-	if token.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+	if token.Type == mconf_tokeniser.TOKEN_TYPE_CONSTANT {
 		value, ok := p.GetConstant(token.Value)
 
 		if ok {
 			for {
 				next := p.Peek()
 
-				if next.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
+				if next.Type == mconf_tokeniser.TOKEN_TYPE_QUESTION_MARK {
 					p.Increment()
 
 					unusedBackup := p.Consume()
 
-					if unusedBackup.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+					if unusedBackup.Type == mconf_tokeniser.TOKEN_TYPE_CONSTANT {
 						continue
 					} else {
 						p.GoBack()
@@ -237,9 +233,9 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 
 			possibleTilde := p.Peek()
 
-			if possibleTilde.Type == tokeniser.TOKEN_TYPE_TILDE {
+			if possibleTilde.Type == mconf_tokeniser.TOKEN_TYPE_TILDE {
 				switch value.(type) {
-				case *ParserValueBool:
+				case *mconf_values.MconfBool:
 				default:
 					return nil, p.FormatErrorAtToken("Ternary operator `~` can only be used with boolean constants", possibleTilde.Start)
 				}
@@ -253,7 +249,7 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 
 		peeked := p.Peek()
 
-		if peeked.Type == tokeniser.TOKEN_TYPE_QUESTION_MARK {
+		if peeked.Type == mconf_tokeniser.TOKEN_TYPE_QUESTION_MARK {
 			p.Increment()
 			return p.ParseConstantWithBackup()
 		}
@@ -265,50 +261,50 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 	}
 }
 
-func (p *Parser) ParseValue() (ParserValue, error) {
+func (p *Parser) ParseValue() (mconf_values.MconfValue, error) {
 	token := p.Consume()
 
 	switch token.Type {
-	case tokeniser.TOKEN_TYPE_WORD:
-		return &ParserValueString{Value: token.Value}, nil
-	case tokeniser.TOKEN_TYPE_STRING:
+	case mconf_tokeniser.TOKEN_TYPE_WORD:
+		return &mconf_values.MconfString{Value: token.Value}, nil
+	case mconf_tokeniser.TOKEN_TYPE_STRING:
 		sb, err := p.EvaluateStringValue(token)
 		if err != nil {
 			return nil, err
 		}
 
-		return &ParserValueString{Value: sb}, nil
-	case tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
+		return &mconf_values.MconfString{Value: sb}, nil
+	case mconf_tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
 		if strings.Contains(token.Value, ".") || strings.Contains(token.Value, "e") || strings.Contains(token.Value, "E") {
 			bigFl, _, err := big.ParseFloat(token.Value, 10, 0, big.ToNearestEven)
 			if err != nil {
 				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to float", token.Value), token.Start)
 			}
 
-			return &ParserValueFloat{Value: bigFl}, nil
+			return &mconf_values.MconfFloat{Value: bigFl}, nil
 		} else {
 			intVal, success := new(big.Int).SetString(token.Value, 10)
 			if !success {
 				return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to decimal int", token.Value), token.Start)
 			}
 
-			return &ParserValueInt{Value: intVal}, nil
+			return &mconf_values.MconfInt{Value: intVal}, nil
 		}
-	case tokeniser.TOKEN_TYPE_NUMBER_HEX:
+	case mconf_tokeniser.TOKEN_TYPE_NUMBER_HEX:
 		intVal, success := new(big.Int).SetString(token.Value, 16)
 		if !success {
 			return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to hex int", token.Value), token.Start)
 		}
 
-		return &ParserValueInt{Value: intVal}, nil
-	case tokeniser.TOKEN_TYPE_NUMBER_BINARY:
+		return &mconf_values.MconfInt{Value: intVal}, nil
+	case mconf_tokeniser.TOKEN_TYPE_NUMBER_BINARY:
 		intVal, success := new(big.Int).SetString(token.Value, 2)
 		if !success {
 			return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to binary int", token.Value), token.Start)
 		}
 
-		return &ParserValueInt{Value: intVal}, nil
-	case tokeniser.TOKEN_TYPE_BOOL:
+		return &mconf_values.MconfInt{Value: intVal}, nil
+	case mconf_tokeniser.TOKEN_TYPE_BOOL:
 		var converted bool
 
 		if token.Value == "true" {
@@ -321,16 +317,16 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 
 		peeked := p.Peek()
 
-		if peeked.Type == tokeniser.TOKEN_TYPE_TILDE {
+		if peeked.Type == mconf_tokeniser.TOKEN_TYPE_TILDE {
 			p.Increment()
 
-			return p.ParseTernaryExpression(&ParserValueBool{Value: converted})
+			return p.ParseTernaryExpression(&mconf_values.MconfBool{Value: converted})
 		}
 
-		return &ParserValueBool{Value: converted}, nil
-	case tokeniser.TOKEN_TYPE_NULL:
-		return &ParserValueNull{}, nil
-	case tokeniser.TOKEN_TYPE_CONSTANT:
+		return &mconf_values.MconfBool{Value: converted}, nil
+	case mconf_tokeniser.TOKEN_TYPE_NULL:
+		return &mconf_values.MconfNull{}, nil
+	case mconf_tokeniser.TOKEN_TYPE_CONSTANT:
 		p.GoBack()
 		value, err := p.ParseConstantWithBackup()
 		if err != nil {
@@ -338,20 +334,20 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 		}
 
 		return value, nil
-	case tokeniser.TOKEN_TYPE_OPEN_LIST:
+	case mconf_tokeniser.TOKEN_TYPE_OPEN_LIST:
 		parsedList, err := p.ParseList()
 		if err != nil {
 			return nil, err
 		}
 
-		return &ParserValueList{Value: parsedList}, nil
-	case tokeniser.TOKEN_TYPE_OPEN_OBJ:
+		return &mconf_values.MconfList{Value: parsedList}, nil
+	case mconf_tokeniser.TOKEN_TYPE_OPEN_OBJ:
 		parsedObj, err := p.ParseObject()
 		if err != nil {
 			return nil, err
 		}
 
-		return &ParserValueObject{Value: parsedObj}, nil
+		return &mconf_values.MconfObject{Value: parsedObj}, nil
 	default:
 		return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
 	}
@@ -359,33 +355,33 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 	return nil, fmt.Errorf("Unreachable code reached, please report this as a bug")
 }
 
-func (p *Parser) ParseList() ([]ParserValue, error) {
-	list := make([]ParserValue, 0)
+func (p *Parser) ParseList() ([]mconf_values.MconfValue, error) {
+	list := make([]mconf_values.MconfValue, 0)
 
 	for {
 		token := p.Peek()
 
 		switch token.Type {
-		case tokeniser.TOKEN_TYPE_CLOSE_LIST:
+		case mconf_tokeniser.TOKEN_TYPE_CLOSE_LIST:
 			p.Increment()
 			return list, nil
-		case tokeniser.TOKEN_TYPE_STRING:
+		case mconf_tokeniser.TOKEN_TYPE_STRING:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
+		case mconf_tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_NUMBER_HEX:
+		case mconf_tokeniser.TOKEN_TYPE_NUMBER_HEX:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_NUMBER_BINARY:
+		case mconf_tokeniser.TOKEN_TYPE_NUMBER_BINARY:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_BOOL:
+		case mconf_tokeniser.TOKEN_TYPE_BOOL:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_NULL:
+		case mconf_tokeniser.TOKEN_TYPE_NULL:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_OPEN_LIST:
+		case mconf_tokeniser.TOKEN_TYPE_OPEN_LIST:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_OPEN_OBJ:
+		case mconf_tokeniser.TOKEN_TYPE_OPEN_OBJ:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_CONSTANT:
+		case mconf_tokeniser.TOKEN_TYPE_CONSTANT:
 			{
 				value, err := p.ParseValue()
 				if err != nil {
@@ -394,9 +390,9 @@ func (p *Parser) ParseList() ([]ParserValue, error) {
 
 				comma_or_close := p.Peek()
 
-				if comma_or_close.Type == tokeniser.TOKEN_TYPE_COMMA {
+				if comma_or_close.Type == mconf_tokeniser.TOKEN_TYPE_COMMA {
 					p.Increment()
-				} else if comma_or_close.Type != tokeniser.TOKEN_TYPE_CLOSE_LIST {
+				} else if comma_or_close.Type != mconf_tokeniser.TOKEN_TYPE_CLOSE_LIST {
 					return nil, p.FormatErrorAtToken("Expected comma or closing bracket", comma_or_close.Start)
 				}
 
@@ -412,22 +408,22 @@ func (p *Parser) ParseList() ([]ParserValue, error) {
 	return list, nil
 }
 
-func (p *Parser) ParseObject() (map[string]ParserValue, error) {
-	object := make(map[string]ParserValue)
+func (p *Parser) ParseObject() (map[string]mconf_values.MconfValue, error) {
+	object := make(map[string]mconf_values.MconfValue)
 
 	for {
 		token := p.Consume()
 
 		switch token.Type {
-		case tokeniser.TOKEN_TYPE_CLOSE_OBJ:
+		case mconf_tokeniser.TOKEN_TYPE_CLOSE_OBJ:
 			return object, nil
-		case tokeniser.TOKEN_TYPE_WORD:
+		case mconf_tokeniser.TOKEN_TYPE_WORD:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_STRING:
+		case mconf_tokeniser.TOKEN_TYPE_STRING:
 			{
 				var key string
 
-				if token.Type == tokeniser.TOKEN_TYPE_WORD {
+				if token.Type == mconf_tokeniser.TOKEN_TYPE_WORD {
 					key = token.Value
 				} else {
 					evkey, err := p.EvaluateStringValue(token)
@@ -440,7 +436,7 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 
 				assign := p.Consume()
 
-				if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
+				if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
 					return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
 				}
 
@@ -453,7 +449,7 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 
 				optional_comma := p.Peek()
 
-				if optional_comma.Type == tokeniser.TOKEN_TYPE_COMMA {
+				if optional_comma.Type == mconf_tokeniser.TOKEN_TYPE_COMMA {
 					p.Increment()
 				}
 			}
@@ -467,7 +463,7 @@ func (p *Parser) ParseObject() (map[string]ParserValue, error) {
 	return object, nil
 }
 
-func (p *Parser) SetValuesAndConstantsAfterImport(importEverything bool, importKeys []string, importConstants []string, ic importCacheEntry, errorLoc tokeniser.Location, importPath string) error {
+func (p *Parser) SetValuesAndConstantsAfterImport(importEverything bool, importKeys []string, importConstants []string, ic importCacheEntry, errorLoc mconf_tokeniser.Location, importPath string) error {
 	if importEverything {
 		for k, v := range ic.values {
 			p.GetValues()[k] = v
@@ -497,20 +493,20 @@ func (p *Parser) SetValuesAndConstantsAfterImport(importEverything bool, importK
 	return nil
 }
 
-func (p *Parser) Parse() (map[string]ParserValue, error) {
+func (p *Parser) Parse() (map[string]mconf_values.MconfValue, error) {
 	for {
 		token := p.Consume()
 
 		switch token.Type {
-		case tokeniser.TOKEN_TYPE_EOF:
+		case mconf_tokeniser.TOKEN_TYPE_EOF:
 			return p.GetValues(), nil
-		case tokeniser.TOKEN_TYPE_WORD:
+		case mconf_tokeniser.TOKEN_TYPE_WORD:
 			fallthrough
-		case tokeniser.TOKEN_TYPE_STRING:
+		case mconf_tokeniser.TOKEN_TYPE_STRING:
 			{
 				var key string
 
-				if token.Type == tokeniser.TOKEN_TYPE_WORD {
+				if token.Type == mconf_tokeniser.TOKEN_TYPE_WORD {
 					key = token.Value
 				} else {
 					evkey, err := p.EvaluateStringValue(token)
@@ -523,7 +519,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 				assign := p.Consume()
 
-				if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
+				if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
 					return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
 				}
 
@@ -534,13 +530,13 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 				p.GetValues()[key] = value
 			}
-		case tokeniser.TOKEN_TYPE_CONSTANT:
+		case mconf_tokeniser.TOKEN_TYPE_CONSTANT:
 			{
 				key := token.Value
 
 				assign := p.Consume()
 
-				if assign.Type != tokeniser.TOKEN_TYPE_ASSIGN {
+				if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
 					return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
 				}
 
@@ -551,7 +547,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 				p.GetConstants()[key] = value
 			}
-		case tokeniser.TOKEN_TYPE_OPEN_OBJ:
+		case mconf_tokeniser.TOKEN_TYPE_OPEN_OBJ:
 			{
 				object, err := p.ParseObject()
 				if err != nil {
@@ -562,7 +558,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 					p.GetValues()[k] = v
 				}
 			}
-		case tokeniser.TOKEN_TYPE_DIRECTIVE:
+		case mconf_tokeniser.TOKEN_TYPE_DIRECTIVE:
 			{
 				switch token.Value {
 				case "import":
@@ -573,30 +569,30 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 						importConstants := []string{}
 						importEverything := true
 
-						if nextUnknown.Type == tokeniser.TOKEN_TYPE_OPEN_OBJ {
+						if nextUnknown.Type == mconf_tokeniser.TOKEN_TYPE_OPEN_OBJ {
 							p.Increment()
 							importEverything = false
 							for {
 								tok := p.Peek()
 
-								if tok.Type == tokeniser.TOKEN_TYPE_CLOSE_OBJ {
+								if tok.Type == mconf_tokeniser.TOKEN_TYPE_CLOSE_OBJ {
 									p.Increment()
 									break
 								}
 
-								if tok.Type == tokeniser.TOKEN_TYPE_CONSTANT {
+								if tok.Type == mconf_tokeniser.TOKEN_TYPE_CONSTANT {
 									p.Increment()
 									importConstants = append(importConstants, tok.Value)
-								} else if tok.Type == tokeniser.TOKEN_TYPE_WORD || tok.Type == tokeniser.TOKEN_TYPE_STRING {
+								} else if tok.Type == mconf_tokeniser.TOKEN_TYPE_WORD || tok.Type == mconf_tokeniser.TOKEN_TYPE_STRING {
 									p.Increment()
 									importKeys = append(importKeys, tok.Value)
 								}
 
 								comma_or_close := p.Peek()
 
-								if comma_or_close.Type == tokeniser.TOKEN_TYPE_COMMA {
+								if comma_or_close.Type == mconf_tokeniser.TOKEN_TYPE_COMMA {
 									p.Increment()
-								} else if comma_or_close.Type != tokeniser.TOKEN_TYPE_CLOSE_OBJ {
+								} else if comma_or_close.Type != mconf_tokeniser.TOKEN_TYPE_CLOSE_OBJ {
 									return nil, p.FormatErrorAtToken("Expected comma or closing bracket", comma_or_close.Start)
 								}
 							}
@@ -604,7 +600,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 						ipToken := p.Consume()
 
-						if ipToken.Type != tokeniser.TOKEN_TYPE_STRING {
+						if ipToken.Type != mconf_tokeniser.TOKEN_TYPE_STRING {
 							return nil, p.FormatErrorAtToken("Expected string path to import", ipToken.Start)
 						}
 
@@ -639,7 +635,7 @@ func (p *Parser) Parse() (map[string]ParserValue, error) {
 
 						s := string(f)
 
-						t := tokeniser.NewTokeniser(s, relative, p.relativeDir)
+						t := mconf_tokeniser.NewTokeniser(s, relative, p.relativeDir)
 						tokens, errTokenise := t.Tokenise()
 						if errTokenise != nil {
 							return nil, errTokenise

@@ -1,4 +1,4 @@
-package tokeniser
+package mconf_tokeniser
 
 import (
 	"fmt"

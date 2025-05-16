@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/marzeq/mconf"
-	"github.com/marzeq/mconf/parser"
+	"github.com/marzeq/mconf/mconf_values"
 )
 
 func check(err error) {
@@ -155,8 +155,8 @@ func main() {
 		os.Exit(int(exitcode))
 	}
 
-	var globalObj map[string]parser.ParserValue
-	var constants map[string]parser.ParserValue
+	var globalObj map[string]mconf_values.MconfValue
+	var constants map[string]mconf_values.MconfValue
 	var parsingErr error
 
 	if opts.EnvFile != "" {
@@ -222,7 +222,7 @@ func main() {
 
 	check(parsingErr)
 
-	var indexedValue parser.ParserValue = &parser.ParserValueObject{Value: globalObj}
+	var indexedValue mconf_values.MconfValue = &mconf_values.MconfObject{Value: globalObj}
 
 	indexedString := ""
 
@@ -234,8 +234,8 @@ func main() {
 		}
 
 		switch indexedValue.(type) {
-		case *parser.ParserValueObject:
-			obj := indexedValue.(*parser.ParserValueObject).Value
+		case *mconf_values.MconfObject:
+			obj := indexedValue.(*mconf_values.MconfObject).Value
 
 			next := obj[p]
 
@@ -245,8 +245,8 @@ func main() {
 			}
 
 			indexedValue = next
-		case *parser.ParserValueList:
-			list := indexedValue.(*parser.ParserValueList).Value
+		case *mconf_values.MconfList:
+			list := indexedValue.(*mconf_values.MconfList).Value
 
 			index, err := strconv.Atoi(p)
 			if err != nil {
@@ -276,8 +276,8 @@ func main() {
 	}
 
 	switch indexedValue.(type) {
-	case *parser.ParserValueString:
-		fmt.Println(indexedValue.(*parser.ParserValueString).Value)
+	case *mconf_values.MconfString:
+		fmt.Println(indexedValue.(*mconf_values.MconfString).Value)
 	default:
 		fmt.Println(indexedValue.ValueToString(2))
 

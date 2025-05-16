@@ -5,23 +5,24 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/marzeq/mconf/parser"
-	"github.com/marzeq/mconf/tokeniser"
+	"github.com/marzeq/mconf/mconf_parser"
+	"github.com/marzeq/mconf/mconf_tokeniser"
+	"github.com/marzeq/mconf/mconf_values"
 )
 
 const (
-	VERSION  = "1.2505.2"
+	VERSION  = "1.2505.3"
 	PROGNAME = "mconf"
 )
 
-func ParseFromString(s string, rootDir string, rootFile string, relativeDir string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
-	t := tokeniser.NewTokeniser(s, rootFile, relativeDir)
+func ParseFromString(s string, rootDir string, rootFile string, relativeDir string) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
+	t := mconf_tokeniser.NewTokeniser(s, rootFile, relativeDir)
 	tokens, err := t.Tokenise()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	p := parser.NewParser(tokens, rootDir, rootFile, relativeDir)
+	p := mconf_parser.NewParser(tokens, rootDir, rootFile, relativeDir)
 	parsed, err := p.Parse()
 	if err != nil {
 		return nil, nil, err
@@ -31,7 +32,7 @@ func ParseFromString(s string, rootDir string, rootFile string, relativeDir stri
 	return parsed, constants, nil
 }
 
-func ParseFromFile(filename string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
+func ParseFromFile(filename string) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
 	f, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, nil, err
@@ -51,7 +52,7 @@ func ParseFromFile(filename string) (map[string]parser.ParserValue, map[string]p
 	return ParseFromString(s, fileDir, baseFile, relativeDir)
 }
 
-func ParseFromStdin() (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
+func ParseFromStdin() (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
 	b, err := readStdin()
 	if err != nil {
 		return nil, nil, err

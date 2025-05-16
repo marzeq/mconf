@@ -1,42 +1,47 @@
-package parser
+package mconf_values
 
 import (
 	"fmt"
 	"math/big"
 	"strings"
 
-	"github.com/marzeq/mconf/tokeniser"
+	"github.com/marzeq/mconf/mconf_tokeniser"
 )
 
-type ParserValueInt struct {
+type MconfValue interface {
+	ValueToString(indentAndDepth ...int) string
+	ToJSONString() string
+}
+
+type MconfInt struct {
 	Value *big.Int
 }
 
-func (v *ParserValueInt) ValueToString(indentAndDepth ...int) string {
+func (v *MconfInt) ValueToString(indentAndDepth ...int) string {
 	return v.Value.String()
 }
 
-func (v *ParserValueInt) ToJSONString() string {
+func (v *MconfInt) ToJSONString() string {
 	return v.Value.String()
 }
 
-type ParserValueFloat struct {
+type MconfFloat struct {
 	Value *big.Float
 }
 
-func (v *ParserValueFloat) ValueToString(indentAndDepth ...int) string {
+func (v *MconfFloat) ValueToString(indentAndDepth ...int) string {
 	return v.Value.String()
 }
 
-func (v *ParserValueFloat) ToJSONString() string {
+func (v *MconfFloat) ToJSONString() string {
 	return v.Value.String()
 }
 
-type ParserValueList struct {
-	Value []ParserValue
+type MconfList struct {
+	Value []MconfValue
 }
 
-func (v *ParserValueList) OneLineStringValue() string {
+func (v *MconfList) OneLineStringValue() string {
 	if len(v.Value) == 0 {
 		return "[]"
 	}
@@ -56,7 +61,7 @@ func (v *ParserValueList) OneLineStringValue() string {
 	return s
 }
 
-func (v *ParserValueList) ToJSONString() string {
+func (v *MconfList) ToJSONString() string {
 	if len(v.Value) == 0 {
 		return "[]"
 	}
@@ -76,7 +81,7 @@ func (v *ParserValueList) ToJSONString() string {
 	return s
 }
 
-func (v *ParserValueList) ValueToString(indentAndDepth ...int) string {
+func (v *MconfList) ValueToString(indentAndDepth ...int) string {
 	var indentSize int
 	var depth int
 	if len(indentAndDepth) == 0 {
@@ -120,47 +125,47 @@ func (v *ParserValueList) ValueToString(indentAndDepth ...int) string {
 	return s
 }
 
-type ParserValueBool struct {
+type MconfBool struct {
 	Value bool
 }
 
-func (v *ParserValueBool) ValueToString(indentAndDepth ...int) string {
+func (v *MconfBool) ValueToString(indentAndDepth ...int) string {
 	if v.Value {
 		return "true"
 	}
 	return "false"
 }
 
-func (v *ParserValueBool) ToJSONString() string {
+func (v *MconfBool) ToJSONString() string {
 	return v.ValueToString()
 }
 
-type ParserValueNull struct{}
+type MconfNull struct{}
 
-func (v *ParserValueNull) ValueToString(indentAndDepth ...int) string {
+func (v *MconfNull) ValueToString(indentAndDepth ...int) string {
 	return "null"
 }
 
-func (v *ParserValueNull) ToJSONString() string {
+func (v *MconfNull) ToJSONString() string {
 	return v.ValueToString()
 }
 
-type ParserValueString struct {
+type MconfString struct {
 	Value string
 }
 
-func (v *ParserValueString) ValueToString(indentAndDepth ...int) string {
+func (v *MconfString) ValueToString(indentAndDepth ...int) string {
 	replaced := applyEscapes(v.Value)
 
 	return "\"" + replaced + "\""
 }
 
-func (v *ParserValueString) ToJSONString() string {
+func (v *MconfString) ToJSONString() string {
 	return v.ValueToString()
 }
 
-type ParserValueObject struct {
-	Value map[string]ParserValue
+type MconfObject struct {
+	Value map[string]MconfValue
 }
 
 func applyEscapes(s string) string {
@@ -182,14 +187,14 @@ func prepareKey(s string, inJson ...bool) string {
 		return "\"\""
 	}
 
-	if len(inJson) > 0 && inJson[0] || !tokeniser.IsLegalWord([]rune(s)) {
+	if len(inJson) > 0 && inJson[0] || !mconf_tokeniser.IsLegalWord([]rune(s)) {
 		return fmt.Sprintf("\"%s\"", applyEscapes(s))
 	} else {
 		return s
 	}
 }
 
-func (v *ParserValueObject) OneLineStringValue() string {
+func (v *MconfObject) OneLineStringValue() string {
 	if len(v.Value) == 0 {
 		return "{}"
 	}
@@ -213,7 +218,7 @@ func (v *ParserValueObject) OneLineStringValue() string {
 	return s
 }
 
-func (v *ParserValueObject) ToJSONString() string {
+func (v *MconfObject) ToJSONString() string {
 	if len(v.Value) == 0 {
 		return "{}"
 	}
@@ -237,7 +242,7 @@ func (v *ParserValueObject) ToJSONString() string {
 	return s
 }
 
-func (v *ParserValueObject) ValueToString(indentAndDepth ...int) string {
+func (v *MconfObject) ValueToString(indentAndDepth ...int) string {
 	var indentSize int
 	var depth int
 	if len(indentAndDepth) == 0 {
