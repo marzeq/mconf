@@ -11,11 +11,6 @@ import (
 	"github.com/marzeq/mconf/parser"
 )
 
-const (
-	VERSION  = "1.2505.1"
-	PROGNAME = "mconf"
-)
-
 func check(err error) {
 	if err != nil {
 		fmt.Println(err)
@@ -55,7 +50,7 @@ Examples:
 }
 
 func version() string {
-	return fmt.Sprintf("%s version %s", PROGNAME, VERSION)
+	return fmt.Sprintf("%s version %s", mconf.PROGNAME, mconf.VERSION)
 }
 
 func parseOptions() (options, string, uint) {
@@ -238,17 +233,9 @@ func main() {
 			indexedString += "." + p
 		}
 
-		if indexedValue.GetType() != parser.PARSER_VALUE_TYPE_OBJECT && indexedValue.GetType() != parser.PARSER_VALUE_TYPE_LIST {
-			fmt.Printf("Property %s not found, indexed value is not an object or list\n", indexedString)
-			os.Exit(1)
-		}
-
-		if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_OBJECT {
-			obj, err := indexedValue.GetObject()
-			if err != nil {
-				fmt.Printf("Unexpected error, indexed value has type object but cannot be converted to object\n")
-				os.Exit(1)
-			}
+		switch indexedValue.(type) {
+		case *parser.ParserValueObject:
+			obj := indexedValue.(*parser.ParserValueObject).Value
 
 			next := obj[p]
 
@@ -258,12 +245,8 @@ func main() {
 			}
 
 			indexedValue = next
-		} else {
-			list, err := indexedValue.GetList()
-			if err != nil {
-				fmt.Printf("Unexpected error, indexed value has type list but cannot be converted to list\n")
-				os.Exit(1)
-			}
+		case *parser.ParserValueList:
+			list := indexedValue.(*parser.ParserValueList).Value
 
 			index, err := strconv.Atoi(p)
 			if err != nil {
@@ -277,6 +260,9 @@ func main() {
 			}
 
 			indexedValue = list[index]
+		default:
+			fmt.Printf("Property %s not found, indexed value is not an object or list\n", indexedString)
+			os.Exit(1)
 		}
 	}
 
@@ -289,16 +275,10 @@ func main() {
 		return
 	}
 
-	if indexedValue.GetType() == parser.PARSER_VALUE_TYPE_STRING {
-		cast, ok := indexedValue.(*parser.ParserValueString)
-
-		if !ok {
-			fmt.Printf("Unexpected error, indexed value has type string but cannot be cast to string\n")
-			os.Exit(1)
-		}
-
-		fmt.Println(cast.Value)
-	} else {
+	switch indexedValue.(type) {
+	case *parser.ParserValueString:
+		fmt.Println(indexedValue.(*parser.ParserValueString).Value)
+	default:
 		fmt.Println(indexedValue.ValueToString(2))
 
 		if len(opts.AcessedProperties) == 0 && opts.ShowConstants {

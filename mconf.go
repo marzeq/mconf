@@ -9,6 +9,11 @@ import (
 	"github.com/marzeq/mconf/tokeniser"
 )
 
+const (
+	VERSION  = "1.2505.2"
+	PROGNAME = "mconf"
+)
+
 func ParseFromString(s string, rootDir string, rootFile string, relativeDir string) (map[string]parser.ParserValue, map[string]parser.ParserValue, error) {
 	t := tokeniser.NewTokeniser(s, rootFile, relativeDir)
 	tokens, err := t.Tokenise()

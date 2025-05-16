@@ -13,30 +13,9 @@ import (
 
 type ValueType int
 
-const (
-	PARSER_VALUE_TYPE_STRING ValueType = iota
-	PARSER_VALUE_TYPE_FLOAT
-	PARSER_VALUE_TYPE_INT
-	PARSER_VALUE_TYPE_BOOL
-	PARSER_VALUE_TYPE_NULL
-	PARSER_VALUE_TYPE_LIST
-	PARSER_VALUE_TYPE_OBJECT
-)
-
 type ParserValue interface {
-	GetType() ValueType
-
 	ValueToString(indentAndDepth ...int) string
 	ToJSONString() string
-
-	GetString() (string, error)
-	GetFloat() (*big.Float, error)
-	GetInt() (*big.Int, error)
-	GetBool() (bool, error)
-	GetList() ([]ParserValue, error)
-	GetObject() (map[string]ParserValue, error)
-
-	IsNull() bool
 }
 
 type importCacheEntry struct {
@@ -181,15 +160,12 @@ func (p *Parser) EvaluateStringValue(token tokeniser.Token) (string, error) {
 				return "", p.FormatErrorAtToken(fmt.Sprintf("Constant in string substitution `%s` not found", constantName), token.Start)
 			}
 
-			if constantValue.GetType() != PARSER_VALUE_TYPE_STRING {
-				sb += constantValue.ValueToString()
-			} else {
-				constantStr, err := constantValue.GetString()
-				if err != nil {
-					return "", err
-				}
-
+			switch constantValue.(type) {
+			case *ParserValueString:
+				constantStr := constantValue.(*ParserValueString).Value
 				sb += constantStr
+			default:
+				sb += constantValue.ValueToString()
 			}
 		}
 	}
@@ -214,9 +190,12 @@ func (p *Parser) ParseTernaryExpression(condition ParserValue) (ParserValue, err
 		return nil, err
 	}
 
-	valueBool, err := condition.GetBool()
-	if err != nil {
-		return nil, err
+	valueBool := false
+	switch condition.(type) {
+	case *ParserValueBool:
+		valueBool = condition.(*ParserValueBool).Value
+	default:
+		return nil, p.FormatErrorAtToken("Ternary operator `~` can only be used with boolean constants", pipe.Start)
 	}
 
 	if valueBool {
@@ -259,7 +238,9 @@ func (p *Parser) ParseConstantWithBackup() (ParserValue, error) {
 			possibleTilde := p.Peek()
 
 			if possibleTilde.Type == tokeniser.TOKEN_TYPE_TILDE {
-				if value.GetType() != PARSER_VALUE_TYPE_BOOL {
+				switch value.(type) {
+				case *ParserValueBool:
+				default:
 					return nil, p.FormatErrorAtToken("Ternary operator `~` can only be used with boolean constants", possibleTilde.Start)
 				}
 
@@ -348,7 +329,7 @@ func (p *Parser) ParseValue() (ParserValue, error) {
 
 		return &ParserValueBool{Value: converted}, nil
 	case tokeniser.TOKEN_TYPE_NULL:
-		return &ParserValueNull{true}, nil
+		return &ParserValueNull{}, nil
 	case tokeniser.TOKEN_TYPE_CONSTANT:
 		p.GoBack()
 		value, err := p.ParseConstantWithBackup()
