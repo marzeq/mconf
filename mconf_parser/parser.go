@@ -365,6 +365,8 @@ func (p *Parser) ParseList() ([]mconf_values.MconfValue, error) {
 		case mconf_tokeniser.TOKEN_TYPE_CLOSE_LIST:
 			p.Increment()
 			return list, nil
+		case mconf_tokeniser.TOKEN_TYPE_WORD:
+			fallthrough
 		case mconf_tokeniser.TOKEN_TYPE_STRING:
 			fallthrough
 		case mconf_tokeniser.TOKEN_TYPE_NUMBER_DECIMAL:
