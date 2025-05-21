@@ -61,8 +61,8 @@ func UnwrapNull(v MconfValue) (ok bool) {
 	return
 }
 
-func ObjGetString(v MconfObject, key string) (result string, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetString(v map[string]MconfValue, key string) (result string, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return "", false, false
 	}
@@ -73,8 +73,8 @@ func ObjGetString(v MconfObject, key string) (result string, exists bool, typeOk
 	return ms.Value, true, true
 }
 
-func ObjGetBigInt(v MconfObject, key string) (result *big.Int, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetBigInt(v map[string]MconfValue, key string) (result *big.Int, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return nil, false, false
 	}
@@ -85,8 +85,8 @@ func ObjGetBigInt(v MconfObject, key string) (result *big.Int, exists bool, type
 	return mi.Value, true, true
 }
 
-func ObjGetInt(v MconfObject, key string) (result int64, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetInt(v map[string]MconfValue, key string) (result int64, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return 0, false, false
 	}
@@ -98,8 +98,8 @@ func ObjGetInt(v MconfObject, key string) (result int64, exists bool, typeOk boo
 	return result, true, true
 }
 
-func ObjGetBigFloat(v MconfObject, key string) (result *big.Float, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetBigFloat(v map[string]MconfValue, key string) (result *big.Float, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return nil, false, false
 	}
@@ -110,8 +110,8 @@ func ObjGetBigFloat(v MconfObject, key string) (result *big.Float, exists bool, 
 	return mf.Value, true, true
 }
 
-func ObjGetFloat(v MconfObject, key string) (result float64, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetFloat(v map[string]MconfValue, key string) (result float64, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return 0, false, false
 	}
@@ -123,8 +123,8 @@ func ObjGetFloat(v MconfObject, key string) (result float64, exists bool, typeOk
 	return result, true, true
 }
 
-func ObjGetBool(v MconfObject, key string) (result bool, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetBool(v map[string]MconfValue, key string) (result bool, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return false, false, false
 	}
@@ -135,8 +135,8 @@ func ObjGetBool(v MconfObject, key string) (result bool, exists bool, typeOk boo
 	return mb.Value, true, true
 }
 
-func ObjGetList(v MconfObject, key string) (result []MconfValue, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetList(v map[string]MconfValue, key string) (result []MconfValue, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return nil, false, false
 	}
@@ -147,8 +147,8 @@ func ObjGetList(v MconfObject, key string) (result []MconfValue, exists bool, ty
 	return ml.Value, true, true
 }
 
-func ObjGetObject(v MconfObject, key string) (result map[string]MconfValue, exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetObject(v map[string]MconfValue, key string) (result map[string]MconfValue, exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return nil, false, false
 	}
@@ -159,8 +159,8 @@ func ObjGetObject(v MconfObject, key string) (result map[string]MconfValue, exis
 	return mo.Value, true, true
 }
 
-func ObjGetNull(v MconfObject, key string) (exists bool, typeOk bool) {
-	got, ok := v.Value[key]
+func ObjGetNull(v map[string]MconfValue, key string) (exists bool, typeOk bool) {
+	got, ok := v[key]
 	if !ok {
 		return false, false
 	}
