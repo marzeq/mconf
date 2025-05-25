@@ -25,6 +25,10 @@ func (v *MconfInt) ToJSONString() string {
 	return v.Value.String()
 }
 
+func IntToMconfValue(i int64) *MconfInt {
+	return &MconfInt{Value: big.NewInt(i)}
+}
+
 type MconfFloat struct {
 	Value *big.Float
 }
@@ -35,6 +39,10 @@ func (v *MconfFloat) ValueToString(indentAndDepth ...int) string {
 
 func (v *MconfFloat) ToJSONString() string {
 	return v.Value.String()
+}
+
+func FloatToMconfValue(f float64) *MconfFloat {
+	return &MconfFloat{Value: big.NewFloat(f)}
 }
 
 type MconfList struct {
