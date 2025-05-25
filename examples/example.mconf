@@ -27,10 +27,6 @@ binary = 0b101
 
 boolean = true
 false_boolean = false
-also_boolean = on
-also_false_boolean = off
-also_also_boolean = yes
-also_also_false_boolean = no
 
 null_value = null
 
