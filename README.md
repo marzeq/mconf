@@ -2,17 +2,18 @@
 
 ## what and why?
 
-to start - i am a big fan of the general idea of yaml, the easy-to-read nature of it is very appealing to me. however, it has many obvious pitfalls like a (somewhat) undefined syntax with multiple ways to do the same thing, no official standard, and the glaring issue that it's indentation based
+to start - i am a big fan of the general idea of yaml, the easy-to-read nature of it is very appealing to me. however, it has many obvious pitfalls like: multiple ways to do the same thing,
+a standard that is often not respected by different parsers, and the glaring issue that it's indentation based
 
-so, i decided to make my own one that is more strict and has a more defined syntax while still being easy to read, avoiding the problems of yaml, while adding some creature comforts 
+so, i decided to make my own one that is more strict and has a more defined syntax while still being easy to read, avoiding the problems of yaml, while adding some additional features that i think are useful:wq:
 
-it was originally made as a recreational programming exercise and a way to learn more about tokenisation and parsing, however, i decided to flesh it out a bit more to make it more usable
+it was originally made as a recreational programming exercise and a way to learn more about tokenisation and parsing, however, i decided to work on it a bit more to make it more usable
 
 ## getting the binary
 
 ### pre-compiled binaries
 
-go onto the [releases page](https://github.com/marzeq/mconf/releases) and download the binary for your platform (compiled from `stable` branch)
+go onto the [releases page](https://github.com/marzeq/mconf/releases) and download the binary for your platform
 
 ### building from source
 
@@ -24,7 +25,7 @@ git checkout stable
 cd mconf
 just build
 # optionally:
-cp build/mconf ~/.local/usr/bin/ # or /usr/local/bin
+cp build/mconf ~/.local/bin/ # or /usr/local/bin
 ```
 
 see the [building & running](#building--running) section for more info
@@ -35,7 +36,7 @@ see [editors.md](./editors.md) for more info
 
 ## building & running
 
-this repo comes with a justfile, so you can use [just](https://github.com/casey/just) to run the commands (i refuse to add a makefile for any project that is small or medium sized, it's simply unnecessary)
+this repo comes with a justfile, so you can use [just](https://github.com/casey/just) to run the commands
 
 ```sh
 just run        # runs the project, equivalent to `go run .`
@@ -316,15 +317,6 @@ will result in:
 foo = 123
 a = 456
 ```
-
-## todo:
-
-- [x] support for formatted strings
-- [x] merge current env vars with the constants
-- [x] allow for specifying what exactly to import from a file
-- [x] allow specyfing default values for constants/env vars if they are not set
-- [x] hexadecimal and binary numbers
-- [x] add a --json flag to convert mconf to json
 
 ## license
 
