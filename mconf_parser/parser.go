@@ -28,14 +28,14 @@ type Parser struct {
 	importCache *map[string]importCacheEntry
 }
 
-func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile string, relativeDir string) Parser {
+func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile string, relativeDir string, constants map[string]mconf_values.MconfValue) Parser {
 	importCache := make(map[string]importCacheEntry)
 
 	fullFile := filepath.Join(rootDir, currentFile)
 
 	importCache[fullFile] = importCacheEntry{
 		values:    make(map[string]mconf_values.MconfValue),
-		constants: make(map[string]mconf_values.MconfValue),
+		constants: constants,
 	}
 
 	return Parser{

@@ -15,14 +15,21 @@ const (
 	PROGNAME = "mconf"
 )
 
-func ParseFromString(s string, rootDir string, rootFile string, relativeDir string) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
+func ParseFromString(s string, rootDir string, rootFile string, relativeDir string, constsOpt ...map[string]mconf_values.MconfValue) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
 	t := mconf_tokeniser.NewTokeniser(s, rootFile, relativeDir)
 	tokens, err := t.Tokenise()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	p := mconf_parser.NewParser(tokens, rootDir, rootFile, relativeDir)
+	var consts map[string]mconf_values.MconfValue
+	if len(constsOpt) > 0 {
+		consts = constsOpt[0]
+	} else {
+		consts = make(map[string]mconf_values.MconfValue)
+	}
+
+	p := mconf_parser.NewParser(tokens, rootDir, rootFile, relativeDir, consts)
 	parsed, err := p.Parse()
 	if err != nil {
 		return nil, nil, err
@@ -32,7 +39,7 @@ func ParseFromString(s string, rootDir string, rootFile string, relativeDir stri
 	return parsed, constants, nil
 }
 
-func ParseFromFile(filename string) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
+func ParseFromFile(filename string, constsOpt ...map[string]mconf_values.MconfValue) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
 	f, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, nil, err
@@ -49,10 +56,14 @@ func ParseFromFile(filename string) (map[string]mconf_values.MconfValue, map[str
 
 	baseFile := filepath.Base(filename)
 
+	if len(constsOpt) > 0 {
+		return ParseFromString(s, fileDir, baseFile, relativeDir, constsOpt[0])
+	}
+
 	return ParseFromString(s, fileDir, baseFile, relativeDir)
 }
 
-func ParseFromStdin() (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
+func ParseFromStdin(constsOpt ...map[string]mconf_values.MconfValue) (map[string]mconf_values.MconfValue, map[string]mconf_values.MconfValue, error) {
 	b, err := readStdin()
 	if err != nil {
 		return nil, nil, err
@@ -68,6 +79,10 @@ func ParseFromStdin() (map[string]mconf_values.MconfValue, map[string]mconf_valu
 	absCwd, absCwdErr := filepath.Abs(cwd)
 	if absCwdErr != nil {
 		return nil, nil, absCwdErr
+	}
+
+	if len(constsOpt) > 0 {
+		return ParseFromString(s, absCwd, "", cwd, constsOpt[0])
 	}
 
 	return ParseFromString(s, absCwd, "", cwd)
