@@ -483,18 +483,31 @@ func (p *Parser) Parse() (map[string]mconf_values.MconfValue, error) {
 			{
 				key := token.Value
 
-				assign := p.Consume()
+				assignOrQmark := p.Consume()
+				if assignOrQmark.Type == mconf_tokeniser.TOKEN_TYPE_QUESTION_MARK {
+					assign := p.Consume()
+					if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
+						return nil, p.FormatErrorAtToken("Expected assignment operator after `${key} ? at the top level`", assignOrQmark.Start)
+					}
+					value, err := p.ParseValue()
+					if err != nil {
+						return nil, err
+					}
+					if _, exists := p.GetConstants()[key]; !exists {
+						p.GetConstants()[key] = value
+					}
+				} else {
+					if assignOrQmark.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
+						return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assignOrQmark.Start)
+					}
 
-				if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
-					return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
+					value, err := p.ParseValue()
+					if err != nil {
+						return nil, err
+					}
+
+					p.GetConstants()[key] = value
 				}
-
-				value, err := p.ParseValue()
-				if err != nil {
-					return nil, err
-				}
-
-				p.GetConstants()[key] = value
 			}
 		case mconf_tokeniser.TOKEN_TYPE_OPEN_OBJ:
 			{

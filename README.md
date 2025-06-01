@@ -257,13 +257,13 @@ user = $USER
 
 #### default values
 
-if a constant is not defined, you can put a `?` after it and then another constant or value that will be used as the default value
+if a constant is not defined, you can put a `?` after it and then another constant or value that will be used as the backup value
 
 ```mconf
 $default_user = "some_user"
 user = $USER?$default_user
 
-# OR
+# or simply
 
 user = $USER?"some_user"
 ```
@@ -275,6 +275,12 @@ something = $a?$b?$c?123 # will evaluate to 123 because neither $a, $b or $c are
 
 $x = "x"
 something2 = $a?$x?$c?456 # will evaluate to "x" because $x is defined (everything after $x is ignored)
+```
+
+a common pattern `$var = $var?(default)` can be shortened to
+
+```mconf
+$var ?= (default)
 ```
 
 ### import
