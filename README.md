@@ -277,15 +277,6 @@ $x = "x"
 something2 = $a?$x?$c?456 # will evaluate to "x" because $x is defined (everything after $x is ignored)
 ```
 
-#### ternary operator
-
-you can use the ternary operator to choose between two values based on a **defined** constant with a **boolean value** or a straight up boolean value
-
-```mconf
-$use_https = true
-protocol = $use_https ~ "https" | "http" # evaluates to "https"
-```
-
 ### import
 
 files can import other files, and the imported file will be parsed and merged with the current file (constants are shared between the files as well)
