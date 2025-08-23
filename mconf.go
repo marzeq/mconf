@@ -1,98 +1,98 @@
 package mconf
 
 import (
-	"io"
-	"os"
-	"path/filepath"
+  "io"
+  "os"
+  "path/filepath"
 
-	"github.com/marzeq/mconf/mconf_parser"
-	"github.com/marzeq/mconf/mconf_tokeniser"
-	"github.com/marzeq/mconf/mconf_values"
+  "github.com/marzeq/mconf/mconf_parser"
+  "github.com/marzeq/mconf/mconf_tokeniser"
+  "github.com/marzeq/mconf/mconf_values"
 )
 
 const (
-	VERSION  = "1.2508.1"
-	PROGNAME = "mconf"
+  VERSION  = "1.2508.1"
+  PROGNAME = "mconf"
 )
 
 func ParseFromString(s string, rootDir string, rootFile string, relativeDir string, constsOpt ...map[string]mconf_values.MconfValue) (map[string]mconf_values.MconfValue, []string, map[string]mconf_values.MconfValue, error) {
-	t := mconf_tokeniser.NewTokeniser(s, rootFile, relativeDir)
-	tokens, err := t.Tokenise()
-	if err != nil {
-		return nil, nil, nil, err
-	}
+  t := mconf_tokeniser.NewTokeniser(s, rootFile, relativeDir)
+  tokens, err := t.Tokenise()
+  if err != nil {
+    return nil, nil, nil, err
+  }
 
-	var consts map[string]mconf_values.MconfValue
-	if len(constsOpt) > 0 {
-		consts = constsOpt[0]
-	} else {
-		consts = make(map[string]mconf_values.MconfValue)
-	}
+  var consts map[string]mconf_values.MconfValue
+  if len(constsOpt) > 0 {
+    consts = constsOpt[0]
+  } else {
+    consts = make(map[string]mconf_values.MconfValue)
+  }
 
-	p := mconf_parser.NewParser(tokens, rootDir, rootFile, relativeDir, consts)
-	parsed, keysOrder, err := p.Parse()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	constants := p.Constants
+  p := mconf_parser.NewParser(tokens, rootDir, rootFile, relativeDir, consts)
+  parsed, keysOrder, err := p.Parse()
+  if err != nil {
+    return nil, nil, nil, err
+  }
+  constants := p.Constants
 
-	return parsed, keysOrder, constants, nil
+  return parsed, keysOrder, constants, nil
 }
 
 func ParseFromFile(filename string, constsOpt ...map[string]mconf_values.MconfValue) (map[string]mconf_values.MconfValue, []string, map[string]mconf_values.MconfValue, error) {
-	f, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+  f, err := os.ReadFile(filename)
+  if err != nil {
+    return nil, nil, nil, err
+  }
 
-	s := string(f)
+  s := string(f)
 
-	relativeDir := filepath.Dir(filename)
+  relativeDir := filepath.Dir(filename)
 
-	fileDir, fdirErr := filepath.Abs(relativeDir)
-	if fdirErr != nil {
-		return nil, nil, nil, fdirErr
-	}
+  fileDir, fdirErr := filepath.Abs(relativeDir)
+  if fdirErr != nil {
+    return nil, nil, nil, fdirErr
+  }
 
-	baseFile := filepath.Base(filename)
+  baseFile := filepath.Base(filename)
 
-	if len(constsOpt) > 0 {
-		return ParseFromString(s, fileDir, baseFile, relativeDir, constsOpt[0])
-	}
+  if len(constsOpt) > 0 {
+    return ParseFromString(s, fileDir, baseFile, relativeDir, constsOpt[0])
+  }
 
-	return ParseFromString(s, fileDir, baseFile, relativeDir)
+  return ParseFromString(s, fileDir, baseFile, relativeDir)
 }
 
 func ParseFromStdin(constsOpt ...map[string]mconf_values.MconfValue) (map[string]mconf_values.MconfValue, []string, map[string]mconf_values.MconfValue, error) {
-	b, err := readStdin()
-	if err != nil {
-		return nil, nil, nil, err
-	}
+  b, err := readStdin()
+  if err != nil {
+    return nil, nil, nil, err
+  }
 
-	s := string(b)
+  s := string(b)
 
-	cwd, cwdErr := os.Getwd()
-	if cwdErr != nil {
-		return nil, nil, nil, cwdErr
-	}
+  cwd, cwdErr := os.Getwd()
+  if cwdErr != nil {
+    return nil, nil, nil, cwdErr
+  }
 
-	absCwd, absCwdErr := filepath.Abs(cwd)
-	if absCwdErr != nil {
-		return nil, nil, nil, absCwdErr
-	}
+  absCwd, absCwdErr := filepath.Abs(cwd)
+  if absCwdErr != nil {
+    return nil, nil, nil, absCwdErr
+  }
 
-	if len(constsOpt) > 0 {
-		return ParseFromString(s, absCwd, "", cwd, constsOpt[0])
-	}
+  if len(constsOpt) > 0 {
+    return ParseFromString(s, absCwd, "", cwd, constsOpt[0])
+  }
 
-	return ParseFromString(s, absCwd, "", cwd)
+  return ParseFromString(s, absCwd, "", cwd)
 }
 
 func readStdin() ([]byte, error) {
-	b, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		return nil, err
-	}
+  b, err := io.ReadAll(os.Stdin)
+  if err != nil {
+    return nil, err
+  }
 
-	return b, nil
+  return b, nil
 }
