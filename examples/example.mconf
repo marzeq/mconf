@@ -65,6 +65,3 @@ another_backup_value = $undefined_variable?$some_constant
 
 $host = $HOST ? "localhost"
 $base_url = "${protocol}://${host}:${port}"
-
-@import "another.mconf"
-@import { a, $b } "another.mconf"

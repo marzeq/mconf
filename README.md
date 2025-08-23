@@ -283,38 +283,6 @@ a common pattern `$var = $var?(default)` can be shortened to
 $var ?= (default)
 ```
 
-### import
-
-files can import other files, and the imported file will be parsed and merged with the current file (constants are shared between the files as well)
-
-```mconf
-@import "other_file.mconf"
-```
-
-in the case of an import cycle, the file that is second in the chain will only have access to the properties of the first file that were defined before the import
-
-#### specific import
-
-you can specify exactly what you want to import from a file
-
-`a.mconf`:
-```mconf
-@import { foo, $bar } "b.mconf"
-a = $bar
-```
-
-`b.mconf`:
-```mconf
-foo = 123
-$bar = 456
-```
-
-will result in:
-```mconf
-foo = 123
-a = 456
-```
-
 ## license
 
 [do whatever with this, i don't care](./LICENSE)
