@@ -24,15 +24,16 @@ type Parser struct {
 	Constants   map[string]mconf_values.MconfValue
 }
 
-func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile string, relativeDir string, constants map[string]mconf_values.MconfValue) Parser {
+func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile string, relativeDir string) Parser {
 	return Parser{
 		tokens:      tokens,
 		currIndex:   0,
 		rootDir:     rootDir,
 		relativeDir: relativeDir,
 		currentFile: currentFile,
-		Values:			make(map[string]mconf_values.MconfValue),
+		Values:			 make(map[string]mconf_values.MconfValue),
 		ValuesOrder: []string{},
+		Constants:   make(map[string]mconf_values.MconfValue),
 	}
 }
 
