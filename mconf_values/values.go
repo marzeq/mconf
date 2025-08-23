@@ -174,6 +174,7 @@ func (v *MconfString) ToJSONString() string {
 
 type MconfObject struct {
 	Value map[string]MconfValue
+	KeysOrder []string
 }
 
 func applyEscapes(s string) string {
@@ -211,7 +212,8 @@ func (v *MconfObject) OneLineStringValue() string {
 
 	keycount := 0
 
-	for k, val := range v.Value {
+	for _, k := range v.KeysOrder {
+		val := v.Value[k]
 		s += fmt.Sprintf("%s = %s", prepareKey(k), val.ValueToString())
 
 		if keycount < len(v.Value)-1 {
@@ -235,7 +237,8 @@ func (v *MconfObject) ToJSONString() string {
 
 	keycount := 0
 
-	for k, val := range v.Value {
+	for _, k := range v.KeysOrder{
+		val := v.Value[k]
 		s += fmt.Sprintf("%s:%s", prepareKey(k, true), val.ToJSONString())
 
 		if keycount < len(v.Value)-1 {
@@ -281,7 +284,8 @@ func (v *MconfObject) ValueToString(indentAndDepth ...int) string {
 	indent := strings.Repeat(" ", indentSize)
 	currindent := strings.Repeat(indent, depth)
 
-	for k, val := range v.Value {
+	for _, k := range v.KeysOrder {
+		val := v.Value[k]
 		s += fmt.Sprintf("%s%s = %s\n", currindent, prepareKey(k), val.ValueToString(indentSize, depth+1))
 
 		keycount++

@@ -156,6 +156,7 @@ func main() {
 	}
 
 	var globalObj map[string]mconf_values.MconfValue
+	var keysOrder []string
 	var constants map[string]mconf_values.MconfValue
 	var parsingErr error
 
@@ -212,9 +213,9 @@ func main() {
 	}
 
 	if opts.Filename == "-" {
-		globalObj, constants, parsingErr = mconf.ParseFromStdin()
+		globalObj, keysOrder, constants, parsingErr = mconf.ParseFromStdin()
 	} else {
-		globalObj, constants, parsingErr = mconf.ParseFromFile(opts.Filename)
+		globalObj, keysOrder, constants, parsingErr = mconf.ParseFromFile(opts.Filename)
 		if parsingErr != nil {
 			parsingErr = fmt.Errorf("%s - Error reading file,%s", opts.Filename, strings.Split(parsingErr.Error(), ":")[1])
 		}
@@ -222,7 +223,7 @@ func main() {
 
 	check(parsingErr)
 
-	var indexedValue mconf_values.MconfValue = &mconf_values.MconfObject{Value: globalObj}
+	var indexedValue mconf_values.MconfValue = &mconf_values.MconfObject{Value: globalObj, KeysOrder: keysOrder}
 
 	indexedString := ""
 
@@ -275,9 +276,9 @@ func main() {
 		return
 	}
 
-	switch indexedValue.(type) {
+	switch indexedValue := indexedValue.(type) {
 	case *mconf_values.MconfString:
-		fmt.Println(indexedValue.(*mconf_values.MconfString).Value)
+		fmt.Println(indexedValue.Value)
 	default:
 		fmt.Println(indexedValue.ValueToString(2))
 
