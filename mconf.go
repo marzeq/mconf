@@ -11,7 +11,7 @@ import (
 )
 
 const (
-  VERSION  = "1.2508.1"
+  VERSION  = "2.0.0"
   PROGNAME = "mconf"
 )
 
