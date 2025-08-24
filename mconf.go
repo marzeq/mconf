@@ -5,13 +5,13 @@ import (
   "os"
   "path/filepath"
 
-  "github.com/marzeq/mconf/mconf_parser"
-  "github.com/marzeq/mconf/mconf_tokeniser"
-  "github.com/marzeq/mconf/mconf_values"
+  "github.com/marzeq/mconf/v2/mconf_parser"
+  "github.com/marzeq/mconf/v2/mconf_tokeniser"
+  "github.com/marzeq/mconf/v2/mconf_values"
 )
 
 const (
-  VERSION  = "1.2508.1"
+  VERSION  = "2.0.0"
   PROGNAME = "mconf"
 )
 

@@ -5,7 +5,7 @@ import (
   "math/big"
   "strings"
 
-  "github.com/marzeq/mconf/mconf_tokeniser"
+  "github.com/marzeq/mconf/v2/mconf_tokeniser"
 )
 
 type MconfValue interface {

@@ -7,8 +7,8 @@ import (
   "strconv"
   "strings"
 
-  "github.com/marzeq/mconf"
-  "github.com/marzeq/mconf/mconf_values"
+  "github.com/marzeq/mconf/v2"
+  "github.com/marzeq/mconf/v2/mconf_values"
 )
 
 func check(err error) {

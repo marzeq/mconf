@@ -7,8 +7,8 @@ import (
   "path"
   "strings"
 
-  "github.com/marzeq/mconf/mconf_tokeniser"
-  "github.com/marzeq/mconf/mconf_values"
+  "github.com/marzeq/mconf/v2/mconf_tokeniser"
+  "github.com/marzeq/mconf/v2/mconf_values"
 )
 
 type ValueType int
