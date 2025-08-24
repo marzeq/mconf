@@ -25,6 +25,12 @@ type Parser struct {
 }
 
 func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile string, relativeDir string, constants map[string]mconf_values.MconfValue) Parser {
+	env := GetEnv()
+	
+	for k, v := range constants{
+		env[k] = v
+	}
+
   return Parser{
     tokens:      tokens,
     currIndex:   0,
@@ -33,7 +39,7 @@ func NewParser(tokens []mconf_tokeniser.Token, rootDir string, currentFile strin
     currentFile: currentFile,
     Values:       make(map[string]mconf_values.MconfValue),
     ValuesOrder: []string{},
-    Constants:   constants,
+    Constants:   env,
   }
 }
 
@@ -210,13 +216,14 @@ func (p *Parser) ParseValue() (mconf_values.MconfValue, error) {
   case mconf_tokeniser.TOKEN_TYPE_BOOL:
     var converted bool
 
-    if token.Value == "true" {
-      converted = true
-    } else if token.Value == "false" {
-      converted = false
-    } else {
-      return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to bool", token.Value), token.Start)
-    }
+		switch token.Value {
+		case "true":
+			converted = true
+		case "false":
+			converted = false
+		default:
+			return nil, p.FormatErrorAtToken(fmt.Sprintf("Failed to convert `%s` to bool", token.Value), token.Start)
+		}
 
     return &mconf_values.MconfBool{Value: converted}, nil
   case mconf_tokeniser.TOKEN_TYPE_NULL:
@@ -356,13 +363,13 @@ func (p *Parser) ParseObject() (map[string]mconf_values.MconfValue, []string, er
   }
 }
 
-func (p *Parser) Parse() (map[string]mconf_values.MconfValue, []string, error) {
+func (p *Parser) Parse() (*mconf_values.MconfObject, error) {
   for {
     token := p.Consume()
 
     switch token.Type {
     case mconf_tokeniser.TOKEN_TYPE_EOF:
-      return p.Values, p.ValuesOrder, nil
+      return &mconf_values.MconfObject{Value: p.Values, KeysOrder: p.ValuesOrder}, nil
     case mconf_tokeniser.TOKEN_TYPE_WORD:
       fallthrough
     case mconf_tokeniser.TOKEN_TYPE_STRING:
@@ -374,7 +381,7 @@ func (p *Parser) Parse() (map[string]mconf_values.MconfValue, []string, error) {
         } else {
           evkey, err := p.EvaluateStringValue(token)
           if err != nil {
-            return nil, nil, err
+            return nil,  err
           }
 
           key = evkey
@@ -383,12 +390,12 @@ func (p *Parser) Parse() (map[string]mconf_values.MconfValue, []string, error) {
         assign := p.Consume()
 
         if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
-          return nil, nil, p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
+          return nil,  p.FormatErrorAtToken("Expected assignment operator `=`", assign.Start)
         }
 
         value, err := p.ParseValue()
         if err != nil {
-          return nil, nil, err
+          return nil,  err
         }
 
         p.Values[key] = value
@@ -402,23 +409,23 @@ func (p *Parser) Parse() (map[string]mconf_values.MconfValue, []string, error) {
         if assignOrQmark.Type == mconf_tokeniser.TOKEN_TYPE_QUESTION_MARK {
           assign := p.Consume()
           if assign.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
-            return nil, nil, p.FormatErrorAtToken("Expected assignment operator after `${key} ? at the top level`", assignOrQmark.Start)
+            return nil,  p.FormatErrorAtToken("Expected assignment operator after `${key} ? at the top level`", assignOrQmark.Start)
           }
           value, err := p.ParseValue()
           if err != nil {
-            return nil, nil, err
+            return nil, err
           }
           if _, exists := p.Constants[key]; !exists {
             p.Constants[key] = value
           }
         } else {
           if assignOrQmark.Type != mconf_tokeniser.TOKEN_TYPE_ASSIGN {
-            return nil, nil, p.FormatErrorAtToken("Expected assignment operator `=`", assignOrQmark.Start)
+            return nil, p.FormatErrorAtToken("Expected assignment operator `=`", assignOrQmark.Start)
           }
 
           value, err := p.ParseValue()
           if err != nil {
-            return nil, nil, err
+            return nil, err
           }
 
           p.Constants[key] = value
@@ -428,7 +435,7 @@ func (p *Parser) Parse() (map[string]mconf_values.MconfValue, []string, error) {
       {
         object, keysOrder, err := p.ParseObject()
         if err != nil {
-          return nil, nil, err
+          return nil, err
         }
 
         for _, k := range keysOrder {
@@ -442,13 +449,13 @@ func (p *Parser) Parse() (map[string]mconf_values.MconfValue, []string, error) {
         switch token.Value {
         default:
           {
-            return nil, nil, p.FormatErrorAtToken(fmt.Sprintf("Unknown directive `%s`", token.Value), token.Start)
+            return nil, p.FormatErrorAtToken(fmt.Sprintf("Unknown directive `%s`", token.Value), token.Start)
           }
         }
       }
     default:
       {
-        return nil, nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
+        return nil, p.FormatErrorAtToken(fmt.Sprintf("Unexpected token %s", token.Type), token.Start)
       }
     }
   }

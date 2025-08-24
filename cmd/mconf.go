@@ -155,8 +155,7 @@ func main() {
     os.Exit(int(exitcode))
   }
 
-  var globalObj map[string]mconf_values.MconfValue
-  var keysOrder []string
+  var globalObj *mconf_values.MconfObject
   var constants map[string]mconf_values.MconfValue
   var parsingErr error
 
@@ -213,9 +212,9 @@ func main() {
   }
 
   if opts.Filename == "-" {
-    globalObj, keysOrder, constants, parsingErr = mconf.ParseFromStdin()
+    globalObj, constants, parsingErr = mconf.ParseFromStdin()
   } else {
-    globalObj, keysOrder, constants, parsingErr = mconf.ParseFromFile(opts.Filename)
+    globalObj, constants, parsingErr = mconf.ParseFromFile(opts.Filename)
     if parsingErr != nil {
       parsingErr = fmt.Errorf("%s - Error reading file,%s", opts.Filename, strings.Split(parsingErr.Error(), ":")[1])
     }
@@ -223,69 +222,62 @@ func main() {
 
   check(parsingErr)
 
-  var indexedValue mconf_values.MconfValue = &mconf_values.MconfObject{Value: globalObj, KeysOrder: keysOrder}
+  
+	var indexedValue mconf_values.MconfValue = globalObj
+	var indexedPath string
 
-  indexedString := ""
+	for _, prop := range opts.AcessedProperties {
+		if indexedPath == "" {
+			indexedPath = prop
+		} else {
+			indexedPath += "." + prop
+		}
 
-  for _, p := range opts.AcessedProperties {
-    if indexedString == "" {
-      indexedString = p
-    } else {
-      indexedString += "." + p
-    }
+		switch v := indexedValue.(type) {
+		case *mconf_values.MconfObject:
+			next, ok := v.Value[prop]
+			if !ok || next == nil {
+				fmt.Fprintf(os.Stderr, "Property %s not found\n", indexedPath)
+				os.Exit(1)
+			}
+			indexedValue = next
 
-    switch indexedValue.(type) {
-    case *mconf_values.MconfObject:
-      obj := indexedValue.(*mconf_values.MconfObject).Value
+		case *mconf_values.MconfList:
+			idx, err := strconv.Atoi(prop)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Property %s not found, index is not an integer\n", indexedPath)
+				os.Exit(1)
+			}
+			if idx < 0 || idx >= len(v.Value) {
+				fmt.Fprintf(os.Stderr, "Property %s not found, index out of bounds\n", indexedPath)
+				os.Exit(1)
+			}
+			indexedValue = v.Value[idx]
 
-      next := obj[p]
+		default:
+			fmt.Fprintf(os.Stderr, "Property %s not found, value is not object or list\n", indexedPath)
+			os.Exit(1)
+		}
+	}
 
-      if next == nil {
-        fmt.Printf("Property %s not found\n", indexedString)
-        os.Exit(1)
-      }
+	if opts.ToJson {
+		if opts.ShowConstants {
+			fmt.Fprintln(os.Stderr, "Displaying constants is not supported when outputting as JSON")
+			os.Exit(1)
+		}
+		fmt.Println(indexedValue.ToJSONString())
+		return
+	}
 
-      indexedValue = next
-    case *mconf_values.MconfList:
-      list := indexedValue.(*mconf_values.MconfList).Value
-
-      index, err := strconv.Atoi(p)
-      if err != nil {
-        fmt.Printf("Property %s not found, index is not an integer\n", indexedString)
-        os.Exit(1)
-      }
-
-      if index < 0 || index >= len(list) {
-        fmt.Printf("Property %s not found, index out of bounds\n", indexedString)
-        os.Exit(1)
-      }
-
-      indexedValue = list[index]
-    default:
-      fmt.Printf("Property %s not found, indexed value is not an object or list\n", indexedString)
-      os.Exit(1)
-    }
-  }
-
-  if opts.ToJson {
-    if opts.ShowConstants {
-      fmt.Printf("Displaying constants is not supported when outputting as JSON\n")
-      os.Exit(1)
-    }
-    fmt.Println(indexedValue.ToJSONString())
-    return
-  }
-
-  switch indexedValue := indexedValue.(type) {
-  case *mconf_values.MconfString:
-    fmt.Println(indexedValue.Value)
-  default:
-    fmt.Println(indexedValue.ValueToString(2))
-
-    if len(opts.AcessedProperties) == 0 && opts.ShowConstants {
-      for k, v := range constants {
-        fmt.Printf("$%s = %s\n", k, v.ValueToString(2))
-      }
-    }
-  }
+	switch v := indexedValue.(type) {
+	case *mconf_values.MconfString:
+		fmt.Println(v.Value)
+	default:
+		fmt.Println(v.ValueToString(2))
+		if len(opts.AcessedProperties) == 0 && opts.ShowConstants {
+			for k, val := range constants {
+				fmt.Printf("$%s = %s\n", k, val.ValueToString(2))
+			}
+		}
+	}
 }
