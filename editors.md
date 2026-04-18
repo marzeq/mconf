@@ -8,38 +8,33 @@ not planned (i don't use vscode). if you are willing to make a plugin, feel free
 
 just as vscode
 
-## neovim
+## neovim 0.12
 
-using lazy:
+install and set-up nvim-treesitter and add this snipped to init hook
 
 ```lua
-return {
-  {
-    "marzeq/tree-sitter-mconf",
-    dependencies = { "nvim-treesitter/nvim-treesitter" },
-    config = function()
-      local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-      parser_config.mconf = {
-        install_info = {
-          -- this is a bit hacky, but it's the best way to avoid duplicating the download
-          url = "~/.local/share/nvim/lazy/tree-sitter-mconf",
-          files = { "src/parser.c" },
-        },
-      }
+vim.filetype.add({
+  pattern = { [".*%.mconf"] = "mconf" },
+})
 
-      vim.filetype.add({
-        pattern = { [".*%.mconf"] = "mconf" },
-      })
+vim.api.nvim_create_autocmd("User", { pattern = "TSUpdate",
+callback = function()
+  require("nvim-treesitter.parsers").mconf = {
+    install_info = {
+      url = "https://github.com/marzeq/tree-sitter-mconf",
+      revision = "f1422fe2c06c6e7f7b7ba3b48bb26364aef5fec7",
+      queries = "queries/mconf",
+    },
+    tier = 2,
+  }
+end})
 
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = "mconf",
-        callback = function()
-          vim.api.nvim_command("set commentstring=#\\ %s")
-        end,
-      })
-    end,
-  },
-}
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "mconf",
+  callback = function()
+    vim.bo.commentstring = "# %s"
+  end,
+})
 ```
 
 i don't know how to make it work for a different plugin manager, so you're on your own on that one (but it should be easy to adapt)
